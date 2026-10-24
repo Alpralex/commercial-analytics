@@ -2,7 +2,7 @@
 
 A sales-director app for an animal-health distributor in Portugal: revenue, customer coverage,
 rep visits, discounting and receivables. It reproduces the kind of app I relied on for seven
-years as commercial director of a distributor in Brazil, rebuilt on synthetic data so it can be public.
+years in sales leadership at a distributor in Brazil, rebuilt on synthetic data so it can be public.
 
 **Stack:** Python (data generator) · Qlik Sense load script · set analysis · master items.
 A Power BI version of the same model is planned.
