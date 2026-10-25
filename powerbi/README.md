@@ -1,5 +1,7 @@
 # Commercial analytics in Power BI
 
+**Live report (Publish to web):** https://app.powerbi.com/view?r=eyJrIjoiOWFmNmE3ZDctOTIyZS00ODM1LWFmMTgtMzBlMmMxZTkyNWQzIiwidCI6IjY2MDMwOWU1LWI1YWEtNDQzNS1iMDU2LTJhYmViOGZmNDZjNyJ9
+
 The same model as the Qlik app, the dbt marts and the web page, as a Power BI project (PBIP). The semantic model is written in TMDL, so every table, relationship and DAX measure is readable in Git. The measures reproduce the Qlik master items in [`../qlik/master_items.md`](../qlik/master_items.md).
 
 ## Open it
