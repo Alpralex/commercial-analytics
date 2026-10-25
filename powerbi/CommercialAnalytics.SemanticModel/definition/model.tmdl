@@ -1,0 +1,17 @@
+model Model
+	culture: en-US
+	defaultPowerBIDataSourceVersion: powerBI_V3
+	sourceQueryCulture: en-US
+	dataAccessOptions
+		legacyRedirects
+		returnErrorValuesAsNull
+
+	annotation PBI_QueryOrder = ["DataFolder","dim_date","dim_customer","dim_rep","dim_category","fct_sales","fct_visits","fct_invoices"]
+
+ref table dim_date
+ref table dim_customer
+ref table dim_rep
+ref table dim_category
+ref table fct_sales
+ref table fct_visits
+ref table fct_invoices

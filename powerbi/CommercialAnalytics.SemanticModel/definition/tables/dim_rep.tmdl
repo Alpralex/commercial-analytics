@@ -1,0 +1,36 @@
+table dim_rep
+
+	column rep_id
+		dataType: string
+		isKey
+		summarizeBy: none
+		sourceColumn: rep_id
+
+	column rep_name
+		dataType: string
+		summarizeBy: none
+		sourceColumn: rep_name
+
+	column rep_region
+		dataType: string
+		summarizeBy: none
+		sourceColumn: rep_region
+
+	column left_on
+		dataType: dateTime
+		formatString: yyyy-mm-dd
+		summarizeBy: none
+		sourceColumn: left_on
+
+	column is_active
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: is_active
+
+	partition dim_rep = m
+		mode: import
+		source =
+				let
+					Source = Parquet.Document ( File.Contents ( DataFolder & "dim_rep.parquet" ) )
+				in
+					Source

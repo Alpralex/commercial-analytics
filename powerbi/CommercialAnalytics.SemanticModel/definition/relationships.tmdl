@@ -1,0 +1,39 @@
+relationship fct_sales_date
+	fromColumn: fct_sales.date_day
+	toColumn: dim_date.date_day
+
+relationship fct_sales_customer
+	fromColumn: fct_sales.customer_id
+	toColumn: dim_customer.customer_id
+
+relationship fct_sales_rep
+	fromColumn: fct_sales.rep_id
+	toColumn: dim_rep.rep_id
+
+relationship fct_sales_category
+	fromColumn: fct_sales.category
+	toColumn: dim_category.category
+
+relationship fct_visits_date
+	fromColumn: fct_visits.date_day
+	toColumn: dim_date.date_day
+
+relationship fct_visits_customer
+	fromColumn: fct_visits.customer_id
+	toColumn: dim_customer.customer_id
+
+relationship fct_visits_rep
+	fromColumn: fct_visits.rep_id
+	toColumn: dim_rep.rep_id
+
+relationship fct_invoices_date
+	fromColumn: fct_invoices.date_day
+	toColumn: dim_date.date_day
+
+relationship fct_invoices_customer
+	fromColumn: fct_invoices.customer_id
+	toColumn: dim_customer.customer_id
+
+relationship fct_invoices_rep
+	fromColumn: fct_invoices.rep_id
+	toColumn: dim_rep.rep_id

@@ -6,7 +6,7 @@ Build them in this order; each takes 20 to 40 minutes with the master items in p
 ## 1. Overview: "How are we doing this year?"
 - KPIs: Revenue YTD, Revenue YTD vs PY %, Gross Margin %, Buying Customers, Overdue 90+.
 - Line chart: Net Revenue by YearMonth, one line per Year (dimension `Month`, alternate `Year`).
-- Bar chart: Revenue YTD vs PY % by Region. **Sul is the only region down (−16.6%).**
+- Bar chart: Revenue YTD vs PY % by Region. **Sul is the only region down (−16.5%).**
 - Filter pane: Region, Segment, Category, Sales Rep.
 
 ## 2. Coverage and visits: "Why is the South falling?"

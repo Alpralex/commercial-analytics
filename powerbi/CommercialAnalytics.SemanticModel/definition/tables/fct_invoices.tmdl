@@ -1,0 +1,102 @@
+table fct_invoices
+
+	/// Invoiced amount including 23% VAT.
+	measure 'Billed Amount' = SUM ( fct_invoices[invoice_amount] )
+		formatString: #,0 €
+
+	measure 'Billing Share' = DIVIDE ( [Billed Amount], CALCULATE ( [Billed Amount], ALL ( dim_customer ) ) )
+		formatString: 0.0%
+
+	/// Unpaid on the snapshot date (30 Sep 2026). Ignores date filters on purpose, like the Qlik master item.
+	measure 'Open Receivables' = CALCULATE ( SUM ( fct_invoices[open_amount] ), REMOVEFILTERS ( dim_date ) )
+		formatString: #,0 €
+
+	measure 'Overdue 90+' = CALCULATE ( SUM ( fct_invoices[open_amount] ), fct_invoices[aging_bucket] = "90+", REMOVEFILTERS ( dim_date ) )
+		formatString: #,0 €
+
+	/// Share of all 90+ overdue receivables.
+	measure 'Overdue 90+ Share' = DIVIDE ( [Overdue 90+], CALCULATE ( [Overdue 90+], ALL ( dim_customer ) ) )
+		formatString: 0.0%
+
+	/// Payment date minus due date, paid invoices only.
+	measure 'Avg Days Late' = AVERAGE ( fct_invoices[days_late] )
+		formatString: 0.0
+
+	column invoice_id
+		dataType: string
+		isKey
+		summarizeBy: none
+		sourceColumn: invoice_id
+
+	column date_day
+		dataType: dateTime
+		formatString: yyyy-mm-dd
+		summarizeBy: none
+		sourceColumn: date_day
+
+	column customer_id
+		dataType: string
+		summarizeBy: none
+		sourceColumn: customer_id
+
+	column rep_id
+		dataType: string
+		summarizeBy: none
+		sourceColumn: rep_id
+
+	column due_date
+		dataType: dateTime
+		formatString: yyyy-mm-dd
+		summarizeBy: none
+		sourceColumn: due_date
+
+	column payment_date
+		dataType: dateTime
+		formatString: yyyy-mm-dd
+		summarizeBy: none
+		sourceColumn: payment_date
+
+	column invoice_amount
+		dataType: double
+		formatString: #,0 €
+		summarizeBy: sum
+		sourceColumn: invoice_amount
+
+	column open_amount
+		dataType: double
+		formatString: #,0 €
+		summarizeBy: sum
+		sourceColumn: open_amount
+
+	column days_late
+		dataType: int64
+		formatString: 0
+		summarizeBy: none
+		sourceColumn: days_late
+
+	column days_overdue
+		dataType: int64
+		formatString: 0
+		summarizeBy: none
+		sourceColumn: days_overdue
+
+	column aging_bucket
+		dataType: string
+		summarizeBy: none
+		sourceColumn: aging_bucket
+		sortByColumn: aging_sort
+
+	column aging_sort
+		dataType: int64
+		isHidden
+		formatString: 0
+		summarizeBy: none
+		sourceColumn: aging_sort
+
+	partition fct_invoices = m
+		mode: import
+		source =
+				let
+					Source = Parquet.Document ( File.Contents ( DataFolder & "fct_invoices.parquet" ) )
+				in
+					Source

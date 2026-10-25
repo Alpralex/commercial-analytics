@@ -1,0 +1,45 @@
+table fct_visits
+
+	measure 'Visits' = COUNTROWS ( fct_visits )
+		formatString: #,0
+
+	measure 'Visits PY' = CALCULATE ( [Visits], SAMEPERIODLASTYEAR ( dim_date[date_day] ) )
+		formatString: #,0
+
+	measure 'Visits YTD' = CALCULATE ( [Visits], DATESYTD ( dim_date[date_day] ) )
+		formatString: #,0
+
+	measure 'Visits PYTD' = CALCULATE ( [Visits], SAMEPERIODLASTYEAR ( DATESYTD ( dim_date[date_day] ) ) )
+		formatString: #,0
+
+	measure 'Visits YTD vs PY %' = DIVIDE ( [Visits YTD] - [Visits PYTD], [Visits PYTD] )
+		formatString: +0.0%;-0.0%;0.0%
+
+	column date_day
+		dataType: dateTime
+		formatString: yyyy-mm-dd
+		summarizeBy: none
+		sourceColumn: date_day
+
+	column customer_id
+		dataType: string
+		summarizeBy: none
+		sourceColumn: customer_id
+
+	column rep_id
+		dataType: string
+		summarizeBy: none
+		sourceColumn: rep_id
+
+	column visit_type
+		dataType: string
+		summarizeBy: none
+		sourceColumn: visit_type
+
+	partition fct_visits = m
+		mode: import
+		source =
+				let
+					Source = Parquet.Document ( File.Contents ( DataFolder & "fct_visits.parquet" ) )
+				in
+					Source

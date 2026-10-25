@@ -1,0 +1,7 @@
+commercial_analytics:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: "{{ env_var('COMMERCIAL_DB_PATH', 'data/commercial.duckdb') }}"
+      threads: 4

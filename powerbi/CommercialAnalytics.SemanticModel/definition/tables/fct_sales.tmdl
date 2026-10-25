@@ -1,0 +1,129 @@
+table fct_sales
+
+	measure 'Net Revenue' = SUM ( fct_sales[net_amount] )
+		formatString: #,0 €
+
+	/// Sales at list price, before discount.
+	measure 'Gross Sales' = SUM ( fct_sales[gross_amount] )
+		formatString: #,0 €
+
+	measure 'Cost of Sales' = SUM ( fct_sales[cost_amount] )
+		formatString: #,0 €
+
+	measure 'Units Sold' = SUM ( fct_sales[quantity] )
+		formatString: #,0
+
+	measure 'Gross Margin' = [Net Revenue] - [Cost of Sales]
+		formatString: #,0 €
+
+	measure 'Gross Margin %' = DIVIDE ( [Gross Margin], [Net Revenue] )
+		formatString: 0.0%
+
+	measure 'Discount Amount' = [Gross Sales] - [Net Revenue]
+		formatString: #,0 €
+
+	/// 1 - net / gross, as in the Qlik master item.
+	measure 'Discount %' = DIVIDE ( [Discount Amount], [Gross Sales] )
+		formatString: 0.0%
+
+	/// Year to date up to the last date in context. With no date filter that is 1 Jan to 30 Sep 2026, because dim_date ends on the snapshot date.
+	measure 'Revenue YTD' = CALCULATE ( [Net Revenue], DATESYTD ( dim_date[date_day] ) )
+		formatString: #,0 €
+
+	measure 'Revenue PYTD' = CALCULATE ( [Net Revenue], SAMEPERIODLASTYEAR ( DATESYTD ( dim_date[date_day] ) ) )
+		formatString: #,0 €
+
+	measure 'Revenue YTD vs PY %' = DIVIDE ( [Revenue YTD] - [Revenue PYTD], [Revenue PYTD] )
+		formatString: +0.0%;-0.0%;0.0%
+
+	measure 'Revenue PY' = CALCULATE ( [Net Revenue], SAMEPERIODLASTYEAR ( dim_date[date_day] ) )
+		formatString: #,0 €
+
+	measure 'Revenue vs PY %' = DIVIDE ( [Net Revenue] - [Revenue PY], [Revenue PY] )
+		formatString: +0.0%;-0.0%;0.0%
+
+	/// The 365 days ending on the snapshot date, whatever the date filter.
+	measure 'Revenue L12M' =
+			VAR LastDay = CALCULATE ( MAX ( dim_date[date_day] ), ALL ( dim_date ) )
+			RETURN
+				CALCULATE ( [Net Revenue], DATESINPERIOD ( dim_date[date_day], LastDay, -365, DAY ) )
+		formatString: #,0 €
+
+	measure 'Revenue L12M at Risk' = CALCULATE ( [Revenue L12M], dim_customer[visit_recency] = "No visit 60+ days" )
+		formatString: #,0 €
+
+	measure 'Buying Customers' = DISTINCTCOUNT ( fct_sales[customer_id] )
+		formatString: #,0
+
+	/// Buyers in the period over all customers in the selected region, segment or account rep (positivação).
+	measure 'Coverage %' =
+			DIVIDE (
+				[Buying Customers],
+				CALCULATE ( COUNTROWS ( dim_customer ), TREATAS ( VALUES ( dim_rep[rep_id] ), dim_customer[account_rep_id] ) )
+			)
+		formatString: 0.0%
+
+	measure 'Revenue per Customer' = DIVIDE ( [Net Revenue], [Buying Customers] )
+		formatString: #,0 €
+
+	measure 'Revenue per Visit' = DIVIDE ( [Net Revenue], [Visits] )
+		formatString: #,0 €
+
+	column date_day
+		dataType: dateTime
+		formatString: yyyy-mm-dd
+		summarizeBy: none
+		sourceColumn: date_day
+
+	column customer_id
+		dataType: string
+		summarizeBy: none
+		sourceColumn: customer_id
+
+	column rep_id
+		dataType: string
+		summarizeBy: none
+		sourceColumn: rep_id
+
+	column category
+		dataType: string
+		summarizeBy: none
+		sourceColumn: category
+
+	column order_lines
+		dataType: int64
+		formatString: #,0
+		summarizeBy: sum
+		sourceColumn: order_lines
+
+	column quantity
+		dataType: int64
+		formatString: #,0
+		summarizeBy: sum
+		sourceColumn: quantity
+
+	column gross_amount
+		dataType: double
+		formatString: #,0 €
+		summarizeBy: sum
+		sourceColumn: gross_amount
+
+	column net_amount
+		dataType: double
+		formatString: #,0 €
+		summarizeBy: sum
+		sourceColumn: net_amount
+
+	column cost_amount
+		dataType: double
+		formatString: #,0 €
+		summarizeBy: sum
+		sourceColumn: cost_amount
+
+	partition fct_sales = m
+		mode: import
+		source =
+				let
+					Source = Parquet.Document ( File.Contents ( DataFolder & "fct_sales.parquet" ) )
+				in
+					Source

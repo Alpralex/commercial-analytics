@@ -1,0 +1,3 @@
+version: 2
+# The raw CSVs are read straight from disk by the staging models (see stg_*.sql).
+# They are written by generator/generate.py to data/ (or the folder in COMMERCIAL_RAW_PATH).
