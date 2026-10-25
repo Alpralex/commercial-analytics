@@ -10,7 +10,7 @@
     "tabOrder": 10000
   },
   "visual": {
-    "visualType": "advancedSlicerVisual",
+    "visualType": "slicer",
     "syncGroup": {
       "groupName": "RegionSync",
       "fieldChanges": true,
@@ -39,29 +39,20 @@
       }
     },
     "objects": {
-      "layout": [
+      "data": [
         {
           "properties": {
-            "rowCount": {
+            "mode": {
               "expr": {
                 "Literal": {
-                  "Value": "1L"
-                }
-              }
-            },
-            "columnCount": {
-              "expr": {
-                "Literal": {
-                  "Value": "4L"
+                  "Value": "'Dropdown'"
                 }
               }
             }
           }
         }
-      ]
-    },
-    "visualContainerObjects": {
-      "title": [
+      ],
+      "header": [
         {
           "properties": {
             "show": {
@@ -80,14 +71,16 @@
             }
           }
         }
-      ],
+      ]
+    },
+    "visualContainerObjects": {
       "general": [
         {
           "properties": {
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Region filter buttons. Applies to every page.'"
+                  "Value": "'Region filter dropdown. Applies to every page.'"
                 }
               }
             }

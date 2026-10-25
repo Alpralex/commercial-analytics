@@ -93,16 +93,18 @@ const scopeOf = (field, value) => ({
   data: [{ scopeId: { Comparison: { ComparisonKind: 0, Left: field, Right: { Literal: { Value: `'${value}'` } } } } }],
 });
 
-// Region buttons plus segment, category and rep dropdowns, synced across pages.
+// Region, segment, category and rep dropdowns, synced across pages.
 function slicers(page) {
   const region = container(page, "slicer_region", { x: 552, y: 16, w: 280, h: 80 }, {
-    visualType: "advancedSlicerVisual",
+    visualType: "slicer",
     syncGroup: { groupName: "RegionSync", fieldChanges: true, filterChanges: true },
     query: { queryState: { Values: { projections: [proj(F.region)] } } },
-    objects: { layout: [{ properties: { rowCount: int(1), columnCount: int(4) } }] },
+    objects: {
+      data: [{ properties: { mode: str("Dropdown") } }],
+      header: [{ properties: { show: bool(true), text: str("Region") } }],
+    },
     visualContainerObjects: {
-      title: [{ properties: { show: bool(true), text: str("Region") } }],
-      general: [{ properties: { altText: str("Region filter buttons. Applies to every page.") } }],
+      general: [{ properties: { altText: str("Region filter dropdown. Applies to every page.") } }],
       padding: [vcoPadding(8)],
     },
   });
@@ -157,12 +159,12 @@ function overviewPage() {
     }),
     card(p, "card_margin", pos(1), meas("Gross Margin %"), "Gross margin %", { alt: "Gross margin as a share of net revenue." }),
     card(p, "card_buyers", pos(2), meas("Buying Customers"), "Buying customers", { units: "1", alt: "Number of customers who bought." }),
-    card(p, "card_no_visit", pos(3), meas("Customers Without Visit 60+"), "Customers without a visit in 60+ days", {
+    card(p, "card_no_visit", pos(3), meas("Customers Without Visit 60+"), "No visit in 60+ days", {
       units: "1", reference: { field: meas("Revenue L12M at Risk"), title: "revenue at risk", units: "1000000", precision: 2 },
       alt: "Customers not visited in more than 60 days, and their revenue in the last 12 months.",
     }),
-    card(p, "card_overdue", pos(4), meas("Overdue 90+"), "Receivables overdue 90+ days", {
-      units: "1000000", precision: 2, alt: "Unpaid invoices more than 90 days past due on the snapshot date.",
+    card(p, "card_overdue", pos(4), meas("Overdue 90+"), "Overdue 90+ days", {
+      units: "1000", precision: 0, alt: "Unpaid invoices more than 90 days past due on the snapshot date.",
     }),
   ];
   const trend = container(p, "line_revenue_month", { x: 16, y: 256, w: 816, h: 448 }, {
@@ -295,6 +297,7 @@ function pricingPage() {
     },
     objects: {
       dataPoint: [{ properties: { fill: fill(C.blue) } }],
+      bubbles: [{ properties: { bubbleSize: int(-15) } }],
       categoryLabels: [{ properties: { show: bool(true), fontSize: num(10), color: fill(C.text) } }],
       categoryAxis: [{ properties: { ...axisOn, showAxisTitle: bool(true), gridlineShow: bool(true), gridlineColor: fill(C.grid) } }],
       valueAxis: [{ properties: { ...axisOn, showAxisTitle: bool(true), gridlineShow: bool(true), gridlineColor: fill(C.grid) } }],

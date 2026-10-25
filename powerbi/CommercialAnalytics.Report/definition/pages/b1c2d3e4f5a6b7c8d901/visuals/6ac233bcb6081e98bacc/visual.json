@@ -70,7 +70,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Customers without a visit in 60+ days'"
+                  "Value": "'No visit in 60+ days'"
                 }
               }
             },

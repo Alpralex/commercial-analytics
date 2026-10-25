@@ -11,7 +11,7 @@
       "type": "SharedResources"
     },
     "customTheme": {
-      "name": "CommercialAnalytics-5a35225c.json",
+      "name": "CommercialAnalytics-dd59cb26.json",
       "reportVersionAtImport": {
         "visual": "2.11.0",
         "report": "3.4.0",
@@ -37,8 +37,8 @@
       "type": "RegisteredResources",
       "items": [
         {
-          "name": "CommercialAnalytics-5a35225c.json",
-          "path": "CommercialAnalytics-5a35225c.json",
+          "name": "CommercialAnalytics-dd59cb26.json",
+          "path": "CommercialAnalytics-dd59cb26.json",
           "type": "CustomTheme"
         }
       ]

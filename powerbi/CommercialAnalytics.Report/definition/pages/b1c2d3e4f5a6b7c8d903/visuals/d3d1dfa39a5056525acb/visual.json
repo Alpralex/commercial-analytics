@@ -109,6 +109,19 @@
           }
         }
       ],
+      "bubbles": [
+        {
+          "properties": {
+            "bubbleSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "-15L"
+                }
+              }
+            }
+          }
+        }
+      ],
       "categoryLabels": [
         {
           "properties": {
