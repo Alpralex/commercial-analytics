@@ -1,29 +1,35 @@
 table dim_rep
+	lineageTag: 53bf3300-d584-4d41-bb5f-37ff6ed0ebc5
 
 	column rep_id
 		dataType: string
 		isKey
+		lineageTag: c6c2b18b-004f-471e-8e07-5adcebd6dc54
 		summarizeBy: none
 		sourceColumn: rep_id
 
 	column rep_name
 		dataType: string
+		lineageTag: 40c22954-752d-4371-8c12-effb34b14314
 		summarizeBy: none
 		sourceColumn: rep_name
 
 	column rep_region
 		dataType: string
+		lineageTag: dfae11a8-2697-4d31-85f0-f879ee5efd0f
 		summarizeBy: none
 		sourceColumn: rep_region
 
 	column left_on
 		dataType: dateTime
 		formatString: yyyy-mm-dd
+		lineageTag: 8c0984ed-a3a0-459e-ae53-15487dbbd827
 		summarizeBy: none
 		sourceColumn: left_on
 
 	column is_active
 		dataType: boolean
+		lineageTag: 70255437-a7e5-4dc1-a24b-868e85ce8ac1
 		summarizeBy: none
 		sourceColumn: is_active
 
@@ -34,3 +40,4 @@ table dim_rep
 					Source = Parquet.Document ( File.Contents ( DataFolder & "dim_rep.parquet" ) )
 				in
 					Source
+

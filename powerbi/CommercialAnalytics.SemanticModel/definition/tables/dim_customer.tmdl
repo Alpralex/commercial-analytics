@@ -1,11 +1,14 @@
 table dim_customer
+	lineageTag: 9751f900-1686-4cb1-ad1c-3db0d06c747b
 
-	measure 'Customers' = COUNTROWS ( dim_customer )
+	measure Customers = COUNTROWS ( dim_customer )
 		formatString: #,0
+		lineageTag: 692044af-d033-40b9-8082-9c1830177db2
 
 	/// Customers whose last visit was more than 60 days before the snapshot date (30 Sep 2026).
 	measure 'Customers Without Visit 60+' = CALCULATE ( COUNTROWS ( dim_customer ), dim_customer[visit_recency] = "No visit 60+ days" )
 		formatString: #,0
+		lineageTag: 7792d1c9-c0b9-4204-8fde-50c869ccfa2a
 
 	/// No visit for 60+ days and still ordering (last order within 180 days), as in the Qlik master item.
 	measure 'Customers at Risk' =
@@ -15,92 +18,109 @@ table dim_customer
 				dim_customer[customer_status] IN { "Active", "Lapsing" }
 			)
 		formatString: #,0
+		lineageTag: 4338694e-0f91-46fa-8e2b-0e9f51383466
 
 	column customer_id
 		dataType: string
 		isKey
+		lineageTag: dbc4f45b-bc78-4a2a-ade6-130a8aad5411
 		summarizeBy: none
 		sourceColumn: customer_id
 
 	column customer_name
 		dataType: string
+		lineageTag: debad8a1-616c-4aa9-a5d7-725148e7599f
 		summarizeBy: none
 		sourceColumn: customer_name
 
 	column segment
 		dataType: string
+		lineageTag: 700254e5-f318-471f-8bf1-6a84df018995
 		summarizeBy: none
 		sourceColumn: segment
 
 	column region
 		dataType: string
+		lineageTag: 00c94e28-aa08-4873-8967-7e6a55af3e89
 		summarizeBy: none
 		sourceColumn: region
 
 	column district
 		dataType: string
+		lineageTag: 7a361c21-4629-4083-a51e-d7c9e56f26e5
 		summarizeBy: none
 		sourceColumn: district
 
 	column account_rep_id
 		dataType: string
+		lineageTag: 8322e98a-a335-4aee-86f6-b9ba0e3a1bbe
 		summarizeBy: none
 		sourceColumn: account_rep_id
 
 	column customer_since
 		dataType: dateTime
 		formatString: yyyy-mm-dd
+		lineageTag: 401be728-4942-4f28-9338-067cf53c882a
 		summarizeBy: none
 		sourceColumn: customer_since
 
 	column payment_terms_days
 		dataType: int64
 		formatString: 0
+		lineageTag: 4f20e08f-6322-4482-9370-6324b7524cfa
 		summarizeBy: none
 		sourceColumn: payment_terms_days
 
 	column last_visit_date
 		dataType: dateTime
 		formatString: yyyy-mm-dd
+		lineageTag: da6687a1-3498-4f1a-adf8-35db3bde811d
 		summarizeBy: none
 		sourceColumn: last_visit_date
 
 	column last_order_date
 		dataType: dateTime
 		formatString: yyyy-mm-dd
+		lineageTag: 990c49ae-839c-468f-9ace-97877b49c846
 		summarizeBy: none
 		sourceColumn: last_order_date
 
 	column days_since_visit
 		dataType: int64
 		formatString: 0
+		lineageTag: 83779658-4588-4a0b-8f86-5ded030ac590
 		summarizeBy: none
 		sourceColumn: days_since_visit
 
 	column days_since_order
 		dataType: int64
 		formatString: 0
+		lineageTag: 290c7934-77e4-4457-a6ac-4566ac6a8cfc
 		summarizeBy: none
 		sourceColumn: days_since_order
 
 	column days_since_visit_band
 		dataType: string
+		lineageTag: d5773971-d078-4da9-9b03-a1ee91b0bd9a
 		summarizeBy: none
 		sourceColumn: days_since_visit_band
 
 	column visit_recency
 		dataType: string
+		lineageTag: d88e8176-d72e-47d9-b22f-68e450d5421d
 		summarizeBy: none
 		sourceColumn: visit_recency
 
 	column customer_status
 		dataType: string
+		lineageTag: 0c4b4cc3-df08-432b-bb8f-3e8df7829c74
 		summarizeBy: none
 		sourceColumn: customer_status
 
 	column revenue_l12m
 		dataType: double
 		formatString: #,0 €
+		lineageTag: 575d3eb1-fb87-47f9-8a77-5020f1de7688
 		summarizeBy: none
 		sourceColumn: revenue_l12m
 
@@ -111,3 +131,4 @@ table dim_customer
 					Source = Parquet.Document ( File.Contents ( DataFolder & "dim_customer.parquet" ) )
 				in
 					Source
+

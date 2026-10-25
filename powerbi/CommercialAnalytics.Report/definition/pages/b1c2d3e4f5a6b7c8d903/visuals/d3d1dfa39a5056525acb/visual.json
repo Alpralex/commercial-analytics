@@ -1,5 +1,5 @@
 {
-  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.9.0/schema.json",
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
   "name": "d3d1dfa39a5056525acb",
   "position": {
     "x": 16,
@@ -28,7 +28,27 @@
               },
               "queryRef": "dim_rep.rep_name",
               "nativeQueryRef": "rep_name",
+              "active": true,
               "displayName": "Sales rep"
+            }
+          ]
+        },
+        "Size": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_sales"
+                    }
+                  },
+                  "Property": "Net Revenue"
+                }
+              },
+              "queryRef": "fct_sales.Net Revenue",
+              "nativeQueryRef": "Net Revenue",
+              "displayName": "Net revenue"
             }
           ]
         },
@@ -47,6 +67,7 @@
               },
               "queryRef": "fct_sales.Discount %",
               "nativeQueryRef": "Discount %",
+              "active": true,
               "displayName": "Discount %"
             }
           ]
@@ -67,25 +88,6 @@
               "queryRef": "fct_sales.Gross Margin %",
               "nativeQueryRef": "Gross Margin %",
               "displayName": "Gross margin %"
-            }
-          ]
-        },
-        "Size": {
-          "projections": [
-            {
-              "field": {
-                "Measure": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "fct_sales"
-                    }
-                  },
-                  "Property": "Net Revenue"
-                }
-              },
-              "queryRef": "fct_sales.Net Revenue",
-              "nativeQueryRef": "Net Revenue",
-              "displayName": "Net revenue"
             }
           ]
         }

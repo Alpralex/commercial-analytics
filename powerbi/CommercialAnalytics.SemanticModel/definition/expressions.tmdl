@@ -1,4 +1,6 @@
 /// Folder that holds the Parquet files, with a trailing backslash. Change it in Transform data > Manage parameters.
 expression DataFolder = "C:\\commercial-analytics\\powerbi\\data\\" meta [IsParameterQuery=true, Type="Text", IsParameterQueryRequired=true]
+	lineageTag: 467e254f-6518-463f-a735-c47ec45c31f2
 
 	annotation PBI_ResultType = Text
+

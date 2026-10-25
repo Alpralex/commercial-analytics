@@ -1,5 +1,5 @@
 {
-  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.9.0/schema.json",
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
   "name": "a20ee2827e44c5c6dfb4",
   "position": {
     "x": 16,
@@ -28,26 +28,8 @@
               },
               "queryRef": "dim_date.month_name",
               "nativeQueryRef": "month_name",
+              "active": true,
               "displayName": "Month"
-            }
-          ]
-        },
-        "Y": {
-          "projections": [
-            {
-              "field": {
-                "Measure": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "fct_sales"
-                    }
-                  },
-                  "Property": "Net Revenue"
-                }
-              },
-              "queryRef": "fct_sales.Net Revenue",
-              "nativeQueryRef": "Net Revenue",
-              "displayName": "Net revenue"
             }
           ]
         },
@@ -67,6 +49,25 @@
               "queryRef": "dim_date.year_number",
               "nativeQueryRef": "year_number",
               "displayName": "Year"
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_sales"
+                    }
+                  },
+                  "Property": "Net Revenue"
+                }
+              },
+              "queryRef": "fct_sales.Net Revenue",
+              "nativeQueryRef": "Net Revenue",
+              "displayName": "Net revenue"
             }
           ]
         }

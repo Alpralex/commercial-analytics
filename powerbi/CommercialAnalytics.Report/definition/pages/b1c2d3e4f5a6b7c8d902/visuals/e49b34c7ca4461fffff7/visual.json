@@ -1,5 +1,5 @@
 {
-  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.9.0/schema.json",
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
   "name": "e49b34c7ca4461fffff7",
   "position": {
     "x": 16,
@@ -28,6 +28,7 @@
               },
               "queryRef": "dim_customer.days_since_visit_band",
               "nativeQueryRef": "days_since_visit_band",
+              "active": true,
               "displayName": "Days since last visit"
             }
           ]

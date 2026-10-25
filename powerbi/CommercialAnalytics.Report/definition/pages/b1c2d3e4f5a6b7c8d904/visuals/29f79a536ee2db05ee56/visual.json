@@ -1,5 +1,5 @@
 {
-  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.9.0/schema.json",
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
   "name": "29f79a536ee2db05ee56",
   "position": {
     "x": 16,
@@ -28,26 +28,8 @@
               },
               "queryRef": "dim_customer.segment",
               "nativeQueryRef": "segment",
+              "active": true,
               "displayName": "Segment"
-            }
-          ]
-        },
-        "Y": {
-          "projections": [
-            {
-              "field": {
-                "Measure": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "fct_invoices"
-                    }
-                  },
-                  "Property": "Open Receivables"
-                }
-              },
-              "queryRef": "fct_invoices.Open Receivables",
-              "nativeQueryRef": "Open Receivables",
-              "displayName": "Open receivables"
             }
           ]
         },
@@ -67,6 +49,25 @@
               "queryRef": "fct_invoices.aging_bucket",
               "nativeQueryRef": "aging_bucket",
               "displayName": "Days past due"
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_invoices"
+                    }
+                  },
+                  "Property": "Open Receivables"
+                }
+              },
+              "queryRef": "fct_invoices.Open Receivables",
+              "nativeQueryRef": "Open Receivables",
+              "displayName": "Open receivables"
             }
           ]
         }

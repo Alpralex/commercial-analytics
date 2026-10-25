@@ -37,3 +37,4 @@ relationship fct_invoices_customer
 relationship fct_invoices_rep
 	fromColumn: fct_invoices.rep_id
 	toColumn: dim_rep.rep_id
+

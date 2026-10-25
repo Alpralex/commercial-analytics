@@ -6,7 +6,9 @@ model Model
 		legacyRedirects
 		returnErrorValuesAsNull
 
-	annotation PBI_QueryOrder = ["DataFolder","dim_date","dim_customer","dim_rep","dim_category","fct_sales","fct_visits","fct_invoices"]
+annotation PBI_QueryOrder = ["DataFolder","dim_date","dim_customer","dim_rep","dim_category","fct_sales","fct_visits","fct_invoices"]
+
+annotation PBI_ProTooling = ["MCP-PBIModeling","DevMode"]
 
 ref table dim_date
 ref table dim_customer
@@ -15,3 +17,6 @@ ref table dim_category
 ref table fct_sales
 ref table fct_visits
 ref table fct_invoices
+
+ref cultureInfo en-US
+
