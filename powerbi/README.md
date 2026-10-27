@@ -79,6 +79,11 @@ Test it in Desktop with *Modeling > View as*, tick **Other user**, type the user
 | south.manager@northwind.example | Regional manager | Lisboa e Vale do Tejo, Sul | 56,431,887 € |
 | anyone else | Sales rep | nothing | blank |
 
+Checked in Desktop on 27 Oct 2026 (Revenue YTD 4.12 M€ for rep01 and 10.82 M€ for the Norte manager, against 34.92 M€ unfiltered):
+
+![View as Sales rep](screenshots/RLS%20Sales%20rep.png)
+![View as Regional manager](screenshots/RLS%20Regional%20manager.png)
+
 In production the calculated table becomes a table loaded from the CRM or HR system, and the roles get Entra ID groups as members in the workspace.
 
 ### Public copy without RLS
