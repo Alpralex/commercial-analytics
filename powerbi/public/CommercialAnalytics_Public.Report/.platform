@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "Report",
+    "displayName": "CommercialAnalytics_Public"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "7c553aa0-74ab-410f-82a2-64aa3788d129"
+  }
+}

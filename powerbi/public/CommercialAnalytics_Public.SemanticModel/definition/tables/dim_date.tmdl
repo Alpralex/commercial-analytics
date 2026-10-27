@@ -1,0 +1,73 @@
+table dim_date
+	lineageTag: 48963e7d-45c3-4bce-8647-d2d12b3ca75a
+	dataCategory: Time
+
+	column date_day
+		dataType: dateTime
+		isKey
+		formatString: yyyy-mm-dd
+		lineageTag: 477f0236-d542-46d7-a716-154105bfcca5
+		summarizeBy: none
+		sourceColumn: date_day
+
+	column year_number
+		dataType: int64
+		formatString: 0
+		lineageTag: c6769e00-5fbf-44c0-83d9-987dc8db4a70
+		summarizeBy: none
+		sourceColumn: year_number
+
+	column quarter_label
+		dataType: string
+		lineageTag: 7bfef624-3c0a-497b-a804-16741c1929ce
+		summarizeBy: none
+		sourceColumn: quarter_label
+
+	column month_number
+		dataType: int64
+		formatString: 0
+		lineageTag: da8edd85-1b90-44ab-b565-56050e01a330
+		summarizeBy: none
+		sourceColumn: month_number
+
+	column month_name
+		dataType: string
+		lineageTag: 9534ce19-9930-4d2d-8e82-65ed46959f5a
+		summarizeBy: none
+		sourceColumn: month_name
+		sortByColumn: month_number
+
+	column month_start
+		dataType: dateTime
+		formatString: mmm yyyy
+		lineageTag: 442e0548-56ca-47ca-a91a-4751ead30758
+		summarizeBy: none
+		sourceColumn: month_start
+
+	column year_month
+		dataType: string
+		lineageTag: 6dc612bf-c7f8-42b6-98d5-a40683b1d72f
+		summarizeBy: none
+		sourceColumn: year_month
+
+	column weekday_number
+		dataType: int64
+		formatString: 0
+		lineageTag: 07caff77-7020-411a-b020-de2706911e06
+		summarizeBy: none
+		sourceColumn: weekday_number
+
+	column season
+		dataType: string
+		lineageTag: 6f2cc563-8777-4228-be07-fc830d13b5ef
+		summarizeBy: none
+		sourceColumn: season
+
+	partition dim_date = m
+		mode: import
+		source =
+				let
+					Source = Parquet.Document ( File.Contents ( DataFolder & "dim_date.parquet" ) )
+				in
+					Source
+

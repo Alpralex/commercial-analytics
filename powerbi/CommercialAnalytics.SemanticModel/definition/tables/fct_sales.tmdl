@@ -91,6 +91,7 @@ table fct_sales
 
 	column date_day
 		dataType: dateTime
+		isHidden
 		formatString: yyyy-mm-dd
 		lineageTag: a5c69021-1b5a-44b0-b5b7-92082950ebcd
 		summarizeBy: none
@@ -98,55 +99,63 @@ table fct_sales
 
 	column customer_id
 		dataType: string
+		isHidden
 		lineageTag: 4862a693-028a-4809-b8eb-9f6f12b584aa
 		summarizeBy: none
 		sourceColumn: customer_id
 
 	column rep_id
 		dataType: string
+		isHidden
 		lineageTag: 22514a90-dd89-4e1b-96cb-80a01e2607a6
 		summarizeBy: none
 		sourceColumn: rep_id
 
 	column category
 		dataType: string
+		isHidden
 		lineageTag: 4a507e89-124b-4242-9cac-30bc2d364979
 		summarizeBy: none
 		sourceColumn: category
 
 	column order_lines
 		dataType: int64
+		isHidden
 		formatString: #,0
 		lineageTag: 49a52164-3bc8-4422-92ba-4ca3f0e05c0f
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: order_lines
 
 	column quantity
 		dataType: int64
+		isHidden
 		formatString: #,0
 		lineageTag: d628bc28-1414-4770-8fe7-e67ed97d6959
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: quantity
 
 	column gross_amount
 		dataType: double
+		isHidden
 		formatString: #,0 €
 		lineageTag: c94bf496-1655-4866-87c2-3d4205ae0297
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: gross_amount
 
 	column net_amount
 		dataType: double
+		isHidden
 		formatString: #,0 €
 		lineageTag: 31e75cd0-14e5-4c39-99d6-f3f1ce643adb
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: net_amount
 
 	column cost_amount
 		dataType: double
+		isHidden
 		formatString: #,0 €
 		lineageTag: 81289fc7-5e94-45ea-89ac-70e22204720d
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: cost_amount
 
 	partition fct_sales = m

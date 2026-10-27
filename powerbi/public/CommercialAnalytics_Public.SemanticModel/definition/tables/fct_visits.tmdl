@@ -1,0 +1,59 @@
+table fct_visits
+	lineageTag: 4c7ecf01-b9b5-4a7d-a925-bebc2fea5d59
+
+	measure Visits = COUNTROWS ( fct_visits )
+		formatString: #,0
+		lineageTag: 4b69b1f3-471b-4c65-be43-c641bb4b3d73
+
+	measure 'Visits PY' = CALCULATE ( [Visits], SAMEPERIODLASTYEAR ( dim_date[date_day] ) )
+		formatString: #,0
+		lineageTag: b02e8d11-f003-40e5-992d-d3ad1ce0aff8
+
+	measure 'Visits YTD' = CALCULATE ( [Visits], DATESYTD ( dim_date[date_day] ) )
+		formatString: #,0
+		lineageTag: 7d3d5b74-4eea-4c39-8894-548be10d2485
+
+	measure 'Visits PYTD' = CALCULATE ( [Visits], SAMEPERIODLASTYEAR ( DATESYTD ( dim_date[date_day] ) ) )
+		formatString: #,0
+		lineageTag: 7cc3cf45-4d31-4db0-a4d6-6e9b50fa5be7
+
+	measure 'Visits YTD vs PY %' = DIVIDE ( [Visits YTD] - [Visits PYTD], [Visits PYTD] )
+		formatString: +0.0%;-0.0%;0.0%
+		lineageTag: 363fbe93-ac2c-42c1-9f4f-41c1c11c5b29
+
+	column date_day
+		dataType: dateTime
+		isHidden
+		formatString: yyyy-mm-dd
+		lineageTag: ae37ceba-c98a-4174-a730-f31a83354ce8
+		summarizeBy: none
+		sourceColumn: date_day
+
+	column customer_id
+		dataType: string
+		isHidden
+		lineageTag: c023a9f6-9ebe-4841-b18d-cbab5edb3299
+		summarizeBy: none
+		sourceColumn: customer_id
+
+	column rep_id
+		dataType: string
+		isHidden
+		lineageTag: 549fe437-aa49-4610-b7a4-f7a518e45b5b
+		summarizeBy: none
+		sourceColumn: rep_id
+
+	column visit_type
+		dataType: string
+		lineageTag: 384011d7-5201-4f19-a5f3-f1d43be03cbb
+		summarizeBy: none
+		sourceColumn: visit_type
+
+	partition fct_visits = m
+		mode: import
+		source =
+				let
+					Source = Parquet.Document ( File.Contents ( DataFolder & "fct_visits.parquet" ) )
+				in
+					Source
+
