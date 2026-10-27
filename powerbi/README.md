@@ -48,6 +48,47 @@ No measure shares a name with a column of its table (Power BI names are case-ins
 
 Expected values with no filters, to check the refresh: Revenue YTD vs PY % for Sul −16.5%; Discount % for REP07 15.1% and Gross Margin % 13.6%; Customers Without Visit 60+ = 225 with Revenue L12M at Risk €5,371,041; Overdue 90+ Share for Livestock farm 83.6%; Avg Days Late 29.2 for farms.
 
+## Time view (calculation group)
+
+`Time view` applies one time comparison to any measure, so the model does not need a YTD, PY and YoY copy of every measure. Put `Time view[Time view]` on the columns of a matrix, or in a slicer, with any measure as the value:
+
+| Item | Expression |
+| --- | --- |
+| Current | `SELECTEDMEASURE()` |
+| Prior year | `CALCULATE(SELECTEDMEASURE(), SAMEPERIODLASTYEAR(dim_date[date_day]))` |
+| vs PY / vs PY % | Current minus prior year, and the same as a share of prior year (format string `+0.0%`) |
+| YTD / Prior YTD / YTD vs PY % | `DATESYTD`, its prior year, and the relative change |
+
+A calculation group requires *discourage implicit measures*, which is on: every visual uses explicit measures. The explicit time measures (`Revenue YTD`, `Visits PYTD`...) stay, because the report pages and the Qlik comparison use them.
+
+## Row-level security
+
+Three roles in `definition/roles/`, driven by `security_user_access`, a hidden calculated table of fictional users (no relationship; each role reads it with `USERPRINCIPALNAME()`):
+
+- **Sales rep**: `dim_rep` filtered to the user's rep and `dim_customer` to the customers that rep owns, so sales, visits and invoices follow.
+- **Regional manager**: `dim_rep` and `dim_customer` filtered to the user's regions.
+- **Sales director**: no filter.
+
+Test it in Desktop with *Modeling > View as*, tick **Other user**, type the user and tick the role. Net Revenue for the whole period (Jan 2024 to Sep 2026):
+
+| User | Role | Sees | Net Revenue |
+| --- | --- | --- | ---: |
+| rep01@northwind.example | Sales rep | REP01, 188 customers | 13,601,408 € |
+| rep07@northwind.example | Sales rep | REP07 | 8,952,289 € |
+| norte.manager@northwind.example | Regional manager | Norte | 36,981,935 € |
+| south.manager@northwind.example | Regional manager | Lisboa e Vale do Tejo, Sul | 56,431,887 € |
+| anyone else | Sales rep | nothing | blank |
+
+In production the calculated table becomes a table loaded from the CRM or HR system, and the roles get Entra ID groups as members in the workspace.
+
+### Public copy without RLS
+
+*Publish to web* refuses models with row-level security, so the public link comes from `public/CommercialAnalytics_Public.pbip`: the same report and model without the roles and `security_user_access`. It is generated, not edited: after changing the report or the model run `node scripts/make_powerbi_public_copy.mjs`.
+
+## Automated model checks
+
+Every push that touches `powerbi/` runs `.github/workflows/model-checks.yml` on a Windows runner: Tabular Editor 2 loads both TMDL models (a syntax error fails the run) and applies Microsoft's Best Practice Analyzer rules (`bpa-rules.json`, from [microsoft/Analysis-Services](https://github.com/microsoft/Analysis-Services/tree/master/BestPracticeRules)). Severity 3 rules fail the run; warnings appear as annotations on the commit.
+
 ## Report to build (four pages, 1280 × 720)
 
 Slicers on every page: `dim_customer[region]` (buttons), `dim_customer[segment]`, `dim_category[category]`, `dim_rep[rep_name]` (dropdowns). Sync them across pages.
