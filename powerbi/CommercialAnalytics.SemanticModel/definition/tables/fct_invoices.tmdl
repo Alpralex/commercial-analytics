@@ -38,6 +38,7 @@ table fct_invoices
 
 	column date_day
 		dataType: dateTime
+		isHidden
 		formatString: yyyy-mm-dd
 		lineageTag: a0cbe392-5e14-40dc-96fc-ab4e74061dc8
 		summarizeBy: none
@@ -45,12 +46,14 @@ table fct_invoices
 
 	column customer_id
 		dataType: string
+		isHidden
 		lineageTag: 3108041e-16ac-4fe1-ae2a-1ea564771bce
 		summarizeBy: none
 		sourceColumn: customer_id
 
 	column rep_id
 		dataType: string
+		isHidden
 		lineageTag: 024e33df-607d-43e5-8549-03dcd100e5a0
 		summarizeBy: none
 		sourceColumn: rep_id
@@ -71,20 +74,23 @@ table fct_invoices
 
 	column invoice_amount
 		dataType: double
+		isHidden
 		formatString: #,0 €
 		lineageTag: c101f452-e0e4-4c2a-acfd-d22e625cc764
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: invoice_amount
 
 	column open_amount
 		dataType: double
+		isHidden
 		formatString: #,0 €
 		lineageTag: 9958dd0f-902c-47c1-99ef-0d060aeea970
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: open_amount
 
 	column days_late
 		dataType: int64
+		isHidden
 		formatString: 0
 		lineageTag: df4c7aed-071c-4621-b8e8-62bae3a325f3
 		summarizeBy: none
