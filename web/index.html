@@ -1,0 +1,562 @@
+<meta charset="utf-8">
+<title>Distributor Commercial Analytics</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@500;600&family=IBM+Plex+Mono:wght@400&display=swap">
+<style>
+/* Layout: a sales director's Monday brief. Findings first, one filter row, then one row of panels per question: region trend, discounting, call list, receivables, seasonality. */
+:root {
+  --paper: #f7f8f9;
+  --sheet: #ffffff;
+  --ink: #1b2430;
+  --muted: #5d6876;
+  --rule: #dce0e5;
+  --grid: #eceff2;
+  --signal: #1f5a85;
+  --signal-soft: #e6eef5;
+  --pt: #b45309;
+  --s1: #2a78d6;
+  --s2: #eb6834;
+  --s3: #1baf7a;
+  --seq-1: #cde2fb; --seq-2: #9ec5f4; --seq-3: #6da7ec; --seq-4: #3987e5; --seq-5: #256abf;
+  --good: #1f7a35;
+  --warn: #9a6c00;
+  --display: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+  --serif: "IBM Plex Serif", Georgia, serif;
+  --body: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #121519; --sheet: #181c21; --ink: #e3e7eb; --muted: #97a2ad; --rule: #2a3038; --grid: #20252c;
+    --signal: #86b6da; --signal-soft: #1a2633;
+    --pt: #f0a04b; --s1: #3987e5; --s2: #d95926; --s3: #199e70;
+    --seq-1: #1a2c40; --seq-2: #184f95; --seq-3: #1c5cab; --seq-4: #2a78d6; --seq-5: #5598e7;
+    --good: #5cb873; --warn: #d9a63a;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #121519; --sheet: #181c21; --ink: #e3e7eb; --muted: #97a2ad; --rule: #2a3038; --grid: #20252c;
+  --signal: #86b6da; --signal-soft: #1a2633;
+  --pt: #f0a04b; --s1: #3987e5; --s2: #d95926; --s3: #199e70;
+  --seq-1: #1a2c40; --seq-2: #184f95; --seq-3: #1c5cab; --seq-4: #2a78d6; --seq-5: #5598e7;
+  --good: #5cb873; --warn: #d9a63a;
+  color-scheme: dark;
+}
+body { background: var(--paper); color: var(--ink); font-family: var(--body); font-size: 1rem; line-height: 1.55; margin: 0; }
+.wrap { max-width: 72rem; margin: 0 auto; padding-block: 2.5rem 4rem; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 2rem; }
+h1, h2, h3 { font-family: var(--display); margin: 0; line-height: 1.15; text-wrap: balance; }
+h1 { font-family: var(--serif); font-size: clamp(1.8rem, 4.2vw, 2.5rem); font-weight: 600; }
+h2 { font-size: 1.05rem; font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+.label { font-size: 0.88rem; color: var(--muted); }
+.crumb { font-size: 0.9rem; }
+a { color: var(--signal); text-underline-offset: 3px; }
+header { display: grid; gap: 0.75rem; }
+.meta { display: flex; flex-wrap: wrap; gap: 0.35rem 1.25rem; font-size: 0.9rem; color: var(--muted); }
+
+.findings { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr)); gap: 1rem; counter-reset: f; }
+.finding { border-top: 1px solid var(--ink); padding-top: 0.75rem; display: grid; gap: 0.35rem; align-content: start; min-width: 0; }
+.finding b { font-weight: 600; font-size: 1rem; }
+
+.filters { display: flex; flex-wrap: wrap; gap: 0.75rem 1.5rem; align-items: center; padding: 0.75rem 0; border-block: 1px solid var(--rule); position: sticky; top: env(safe-area-inset-top, 0px); background: var(--paper); z-index: 5; }
+.filters .grp { display: flex; flex-wrap: wrap; gap: 0.5rem 0.75rem; align-items: center; min-width: 0; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--paper); }
+.seg { display: inline-flex; border: 1px solid var(--rule); border-radius: 2px; overflow: hidden; max-width: 100%; }
+.seg button { font-family: var(--body); font-size: 0.88rem; padding: 0.35rem 0.7rem; background: var(--sheet); color: var(--ink); border: 0; border-right: 1px solid var(--rule); cursor: pointer; white-space: nowrap; }
+.seg button:last-child { border-right: 0; }
+.seg button[aria-pressed="true"] { background: var(--signal-soft); color: var(--ink); box-shadow: inset 0 -2px 0 var(--signal); }
+select { font-family: var(--body); font-size: 0.88rem; padding: 0.35rem 0.5rem; background: var(--sheet); color: var(--ink); border: 1px solid var(--rule); border-radius: 2px; max-width: 100%; }
+button:focus-visible, select:focus-visible, a:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px; }
+.reset { font-family: var(--body); font-size: 0.85rem; background: none; border: 0; color: var(--signal); cursor: pointer; text-decoration: underline; }
+
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 10.5rem), 1fr)); gap: 1rem; }
+.kpi { background: var(--sheet); border: 1px solid var(--rule); border-radius: 2px; padding: 1rem; display: grid; gap: 0.25rem; min-width: 0; }
+.kpi .v { font-family: var(--serif); font-size: 1.7rem; font-weight: 500; font-variant-numeric: tabular-nums; }
+.kpi .d { font-size: 0.85rem; color: var(--muted); }
+.up { color: var(--good); } .down { color: var(--warn); }
+
+.q { display: grid; gap: 0.75rem; }
+.q > .label { font-weight: 600; letter-spacing: 0.02em; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 30rem), 1fr)); gap: 1.25rem; }
+.panel { background: var(--sheet); border: 1px solid var(--rule); border-radius: 2px; padding: 1.1rem; display: grid; gap: 0.75rem; align-content: start; min-width: 0; }
+.panel .sub { font-size: 0.9rem; color: var(--muted); }
+.chart { position: relative; width: 100%; }
+.chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+.chart text { font-family: var(--body); font-size: 11px; fill: var(--muted); }
+.chart .lbl { fill: var(--ink); font-weight: 600; }
+.legend { display: flex; flex-wrap: wrap; gap: 0.25rem 1rem; font-size: 0.85rem; color: var(--ink); }
+.legend i { display: inline-block; width: 14px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 0.35rem; }
+.legend i.sq { width: 10px; height: 10px; border-radius: 2px; }
+
+.tip { position: absolute; pointer-events: none; background: var(--ink); color: var(--paper); font-family: var(--body); font-size: 0.8rem; padding: 0.45rem 0.6rem; border-radius: 3px; white-space: nowrap; transform: translate(-50%, calc(-100% - 10px)); z-index: 3; line-height: 1.45; }
+.tip[hidden] { display: none; }
+
+.tbl-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 0.85rem; }
+th, td { padding: 0.4rem 0.55rem; text-align: right; border-bottom: 1px solid var(--rule); font-variant-numeric: tabular-nums; white-space: nowrap; }
+th { font-size: 0.8rem; font-weight: 600; color: var(--muted); }
+th:first-child, td:first-child { text-align: left; }
+td.l, th.l { text-align: left; }
+.method { display: grid; gap: 0.5rem; font-size: 0.9rem; color: var(--muted); border-top: 1px solid var(--rule); padding-top: 1rem; }
+.method ul { margin: 0; padding-left: 1.1rem; display: grid; gap: 0.3rem; max-width: 80ch; }
+.note { font-size: 0.8rem; color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+tr.hl td, td.hl, th.hl { background: var(--signal-soft); }
+.empty { font-size: 0.9rem; color: var(--muted); }
+</style>
+
+
+<main class="wrap">
+  <header>
+    <p class="crumb"><a href="/">Guilherme Rigonato</a> <span class="label">/ Projects</span></p>
+    <span class="label">Synthetic data · animal-health distributor, Portugal · Jan 2024–Sep 2026</span>
+    <h1>Where is a distributor losing revenue, margin and cash?</h1>
+    <p>A sales director's view of revenue, rep visits, discounting and receivables, the kind of app I relied on in seven years of sales leadership at a distributor. Built on generated data with documented rules, modelled in SQL with dbt and checked by automated tests; the same model runs in Qlik Sense and Power BI.</p>
+    <div class="meta">
+      <span>Snapshot: 30 Sep 2026</span>
+      <span>dbt + DuckDB · 23 models · 64 tests</span>
+      <span id="meta-rows">Order lines: …</span>
+      <span>Amounts in euros, sales excl. VAT</span>
+    </div>
+  </header>
+
+  <section class="findings" aria-label="Key findings">
+    <div class="finding"><span class="label">Finding 1</span><b>Sul is the only region falling.</b><p>Revenue in Sul is down 16.5% in Jan–Sep 2026 on the same months of 2025, while the other regions grew 5–10%. Visits in Sul fell from 2,722 to 1,426 after one of its two reps left in January.</p></div>
+    <div class="finding"><span class="label">Finding 2</span><b>One rep gives margin away.</b><p>REP07 discounts 15.1% against 6.0% for the other reps, so gross margin is 13.6% against 21.8%, with lower revenue per customer than the other Lisbon reps. That is about €0.96M of extra discount since January 2024.</p></div>
+    <div class="finding"><span class="label">Finding 3</span><b>225 customers have not been visited for 60+ days.</b><p>They bought €5.4M in the last 12 months. Customers order more often after a visit and lapse when visits stop, so this is the call list.</p></div>
+    <div class="finding"><span class="label">Finding 4</span><b>Livestock farms hold the overdue cash.</b><p>Farms are 17% of billing but 84% of receivables more than 90 days overdue, and pay 29 days after the due date on average, against 3 days for the other segments.</p></div>
+    <div class="finding"><span class="label">Finding 5</span><b>Two categories are seasonal.</b><p>Vaccines sell 2.0 times as much per month in spring as in winter; parasiticides 2.3 times as much in summer. Pharmaceuticals, pet food, accessories and hygiene are flat.</p></div>
+  </section>
+
+  <div class="filters" role="group" aria-label="Filters">
+    <div class="grp">
+      <label class="label" for="region-sel">Region</label>
+      <select id="region-sel">
+        <option value="">All regions</option>
+      </select>
+    </div>
+    <div class="grp">
+      <span class="label">Period</span>
+      <div class="seg" id="period-seg">
+        <button type="button" data-period="ytd" aria-pressed="true">Jan–Sep 2026</button>
+        <button type="button" data-period="l12m" aria-pressed="false">Last 12 m</button>
+        <button type="button" data-period="y2025" aria-pressed="false">2025</button>
+        <button type="button" data-period="all" aria-pressed="false">All</button>
+      </div>
+    </div>
+    <button type="button" class="reset" id="reset" hidden>Reset</button>
+  </div>
+
+  <section class="kpis" aria-label="Headline numbers" id="kpis"></section>
+
+  <section class="q" aria-labelledby="t-q1">
+    <span class="label" id="t-q1">1 · Which region is falling, and why?</span>
+    <div class="grid2">
+      <div class="panel">
+        <div><h2>Revenue change by region</h2><p class="sub" id="region-sub"></p></div>
+        <div class="chart" id="region-chart"></div>
+      </div>
+      <div class="panel">
+        <div><h2 id="monthly-title">Revenue and visits by month</h2><p class="sub" id="monthly-sub"></p></div>
+        <div class="legend"><span><i style="background:var(--s1)"></i>Net revenue</span><span><i class="sq" style="background:var(--seq-2)"></i>Visits</span><span><i class="sq" style="background:var(--signal-soft);border:1px solid var(--rule)"></i>Selected period</span></div>
+        <div class="chart" id="monthly-chart"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="q" aria-labelledby="t-q2">
+    <span class="label" id="t-q2">2 · Who gives margin away?</span>
+    <div class="grid2">
+      <div class="panel">
+        <div><h2>Discount and gross margin by rep</h2><p class="sub" id="scatter-sub">Each circle is a rep, sized by net revenue in the period.</p></div>
+        <div class="chart" id="scatter-chart"></div>
+      </div>
+      <div class="panel">
+        <div><h2>Reps compared</h2><p class="sub" id="reps-sub"></p></div>
+        <div class="tbl-wrap"><table id="reps-table"></table></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="q" aria-labelledby="t-q3">
+    <span class="label" id="t-q3">3 · Which customers should we call this week?</span>
+    <div class="grid2">
+      <div class="panel">
+        <div><h2>Call list</h2><p class="sub" id="call-sub"></p></div>
+        <div class="tbl-wrap"><table id="call-table"></table></div>
+      </div>
+      <div class="panel">
+        <div><h2>Days since the last visit</h2><p class="sub" id="recency-sub"></p></div>
+        <div class="chart" id="recency-chart"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="q" aria-labelledby="t-q4">
+    <span class="label" id="t-q4">4 · Where is the cash stuck?</span>
+    <div class="grid2">
+      <div class="panel">
+        <div><h2>Open receivables by segment and age</h2><p class="sub" id="aging-sub"></p></div>
+        <div class="legend" id="aging-legend"></div>
+        <div class="chart" id="aging-chart"></div>
+      </div>
+      <div class="panel">
+        <div><h2>Billing, overdue and payment delay by segment</h2><p class="sub">All invoices Jan 2024–Sep 2026, amounts with VAT. Billing = share of invoiced amount. Days late = payment date minus due date, average over paid invoices.</p></div>
+        <div class="tbl-wrap"><table id="pay-table"></table></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="q" aria-labelledby="t-q5">
+    <span class="label" id="t-q5">5 · What is seasonal?</span>
+    <div class="grid2">
+      <div class="panel">
+        <div><h2>Seasonal index by category</h2><p class="sub" id="season-sub"></p></div>
+        <div class="legend"><span><i style="background:var(--s1)"></i>Vaccines</span><span><i style="background:var(--s2)"></i>Parasiticides</span><span><i style="background:var(--muted)"></i>Other categories</span></div>
+        <div class="chart" id="season-chart"></div>
+      </div>
+      <div class="panel">
+        <div><h2>Season against winter</h2><p class="sub">Average monthly net revenue in the season ÷ average in winter (Dec, Jan, Feb), complete years 2024 and 2025.</p></div>
+        <div class="tbl-wrap"><table id="season-table"></table></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="method" aria-labelledby="t-method">
+    <h2 id="t-method">How the numbers are built</h2>
+    <ul>
+      <li><b>Data:</b> synthetic, written by a Python generator with a fixed seed: 1,800 customers in four segments and the four mainland NUTS II regions, 400 SKUs in six categories, 12 reps, about 951,000 order lines, 68,000 visits and 131,000 invoices from January 2024 to September 2026. The patterns found here are rules in the generator, documented in its source, so the page can be checked against them.</li>
+      <li><b>Model:</b> dbt on DuckDB. Staging views read the CSV files; marts form a star schema (dim_customer, dim_product, dim_rep, dim_date, fct_sales_lines, fct_visits, fct_invoices) plus one or two marts per question, with tests for keys, relationships and accepted values. The same model is built in Qlik Sense (load script and master items) and in Power BI (TMDL semantic model).</li>
+      <li><b>Definitions:</b> net revenue excludes VAT; discount = 1 − net ÷ list-price sales; gross margin = (net − cost) ÷ net. Revenue change compares the period with the same months a year earlier. Region is the customer's region.</li>
+      <li><b>Snapshot measures:</b> days since visit, the call list and receivables aging are measured on 30 Sep 2026, so they do not follow the period filter. Aging buckets count days past the due date of invoices still unpaid on that day. The seasonal index uses the complete years 2024 and 2025 only.</li>
+    </ul>
+  </section>
+</main>
+
+<script>
+(function () {
+  var DEF = { region: '', period: 'ytd' };
+  var state = Object.assign({}, DEF);
+  var D = {};
+  var NS = 'http://www.w3.org/2000/svg';
+  var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  var PERIOD_LABEL = {
+    ytd: ['Jan–Sep 2026', 'Jan–Sep 2025'], l12m: ['Oct 2025–Sep 2026', 'Oct 2024–Sep 2025'],
+    y2025: ['2025', '2024'], all: ['Jan 2024–Sep 2026', null]
+  };
+  var BUCKETS = ['Not due', '1-30', '31-60', '61-90', '90+'];
+  var BUCKET_COLOR = ['--seq-1', '--seq-2', '--seq-3', '--seq-5', '--s2'];
+  function el(tag, attrs, parent) { var e = document.createElementNS(NS, tag); for (var k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; }
+  function txt(parent, x, y, s, attrs) { var t = el('text', Object.assign({ x: x, y: y }, attrs || {}), parent); t.textContent = s; return t; }
+  function css(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+  function niceStep(span, n) { var raw = span / (n || 4), p = Math.pow(10, Math.floor(Math.log10(raw))), m = raw / p; return (m <= 1 ? 1 : m <= 2 ? 2 : m <= 2.5 ? 2.5 : m <= 5 ? 5 : 10) * p; }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  var signed = function (v, d) { return v == null || !isFinite(v) ? '–' : (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v * 100).toFixed(d == null ? 1 : d) + '%'; };
+  var pct = function (v, d) { return v == null || !isFinite(v) ? '–' : (v * 100).toFixed(d == null ? 1 : d) + '%'; };
+  var int = function (v) { return Math.round(v).toLocaleString('en-US'); };
+  function eur(v) {
+    var a = Math.abs(v), s = v < 0 ? '−' : '';
+    if (a >= 1e6) return s + '€' + (a / 1e6).toFixed(a >= 1e7 ? 1 : 2) + 'M';
+    if (a >= 1e3) return s + '€' + Math.round(a / 1e3) + 'k';
+    return s + '€' + Math.round(a);
+  }
+  function ymLabel(ym) { return MONTHS[Number(ym.slice(5, 7)) - 1] + ' ' + ym.slice(0, 4); }
+  function shortRegion(r) { return r === 'Lisboa e Vale do Tejo' ? 'Lisboa e VT' : r; }
+  function inRegion(r) { return !state.region || r === state.region; }
+  function win(tag) { var p = D.meta.periods[state.period]; var a = tag === 'prev' ? p[2] : p[0], b = tag === 'prev' ? p[3] : p[1]; return a ? [a.slice(0, 7), b.slice(0, 7)] : null; }
+  function inWin(ym, w) { return w && ym >= w[0] && ym <= w[1]; }
+  function sales(tag, pred) {
+    var w = win(tag), t = { g: 0, n: 0, k: 0 }; if (!w) return null;
+    D.sales.forEach(function (r) { if (inWin(r[0], w) && pred(r)) { t.g += r[4]; t.n += r[5]; t.k += r[6]; } });
+    return t;
+  }
+  function visits(tag, pred) { var w = win(tag); if (!w) return null; var s = 0; D.visits.forEach(function (r) { if (inWin(r[0], w) && pred(r)) s += r[3]; }); return s; }
+  function buyers(tag, region, rep) { var r = D.buyers.find(function (b) { return b[0] === state.period && b[1] === tag && b[2] === (region || '') && b[3] === (rep || ''); }); return r ? r[4] : null; }
+  function change(cur, prev) { return prev ? cur / prev - 1 : null; }
+  function cls(v) { return v == null ? '' : v >= 0 ? 'up' : 'down'; }
+  function tipFor(host) { var tip = document.createElement('div'); tip.className = 'tip'; tip.hidden = true; host.appendChild(tip); return tip; }
+  function placeTip(tip, svg, W, H, x, y, html) { var b = svg.getBoundingClientRect(); tip.innerHTML = html; tip.style.left = Math.max(60, Math.min(b.width - 60, x / W * b.width)) + 'px'; tip.style.top = (y / H * b.height) + 'px'; tip.hidden = false; }
+  var regionPred = function (r) { return inRegion(r[1]); };
+
+  function renderKpis() {
+    var L = PERIOD_LABEL[state.period], cur = sales('cur', regionPred), prev = sales('prev', regionPred);
+    var vc = visits('cur', regionPred), vp = visits('prev', regionPred);
+    var bc = buyers('cur', state.region), bp = buyers('prev', state.region);
+    var calls = D.call.filter(function (c) { return inRegion(c[4]); });
+    var od = 0, open = 0; D.pay.forEach(function (r) { if (inRegion(r[0])) { od += r[4]; open += r[3]; } });
+    var vs = function (a, b) { if (b == null) return L[0]; var c = change(a, b); return L[0] + ' · <span class="' + cls(c) + '">' + signed(c) + '</span> vs ' + L[1]; };
+    var tiles = [
+      ['Net revenue', eur(cur.n), vs(cur.n, prev ? prev.n : null)],
+      ['Gross margin', pct((cur.n - cur.k) / cur.n), 'Discount ' + pct(1 - cur.n / cur.g) + ' off list price' + (prev ? ' · margin ' + pct((prev.n - prev.k) / prev.n) + ' in ' + L[1] : '')],
+      ['Rep visits', int(vc), vs(vc, vp)],
+      ['Buying customers', bc == null ? '–' : int(bc), vs(bc, bp)],
+      ['Customers, no visit 60+ days', int(calls.length), eur(calls.reduce(function (s, c) { return s + c[11]; }, 0)) + ' bought in the last 12 months · on 30 Sep 2026'],
+      ['Overdue more than 90 days', eur(od), 'of ' + eur(open) + ' open receivables · on 30 Sep 2026']
+    ];
+    document.getElementById('kpis').innerHTML = tiles.map(function (t) { return '<div class="kpi"><span class="label">' + t[0] + '</span><span class="v">' + t[1] + '</span><span class="d">' + t[2] + '</span></div>'; }).join('');
+  }
+
+  // Q1: diverging bars, change on the comparison period (or revenue when the period has no comparison).
+  function renderRegions() {
+    var host = document.getElementById('region-chart'); host.innerHTML = '';
+    var L = PERIOD_LABEL[state.period], hasPrev = !!L[1];
+    var rows = D.meta.regions.map(function (reg) {
+      var p = function (r) { return r[1] === reg; }, c = sales('cur', p), pr = sales('prev', p);
+      var vc = visits('cur', p), vp = visits('prev', p);
+      return { reg: reg, cur: c.n, prev: pr ? pr.n : null, v: hasPrev ? change(c.n, pr.n) : c.n, vc: vc, vp: vp };
+    }).sort(function (a, b) { return a.v - b.v; });
+    document.getElementById('region-sub').textContent = hasPrev ? 'Net revenue ' + L[0] + ' against ' + L[1] + '.' : 'Net revenue ' + L[0] + '. Pick a shorter period to compare with a year earlier.';
+    var W = 480, rowH = 36, m = { l: 118, r: 64, t: 6, b: 6 }, H = m.t + m.b + rows.length * rowH;
+    var svg = el('svg', { viewBox: '0 0 ' + W + ' ' + H, role: 'img', 'aria-label': 'Revenue change by region' }, host);
+    var vals = rows.map(function (r) { return r.v; });
+    var lo = hasPrev ? Math.min(0, Math.min.apply(null, vals)) * 1.15 : 0, hi = Math.max(0, Math.max.apply(null, vals)) * 1.15 || 1;
+    var X = function (v) { return m.l + (v - lo) / (hi - lo) * (W - m.l - m.r); };
+    var tip = tipFor(host);
+    rows.forEach(function (r, i) {
+      var y = m.t + i * rowH, sel = state.region === r.reg, dim = state.region && !sel;
+      var x0 = X(0), x1 = X(r.v), neg = r.v < 0;
+      txt(svg, 8, y + rowH / 2 + 4, shortRegion(r.reg), { class: sel || !state.region ? 'lbl' : '' });
+      el('rect', { x: Math.min(x0, x1), y: y + 8, width: Math.max(2, Math.abs(x1 - x0)), height: rowH - 16, rx: 3, fill: css(neg ? '--pt' : '--s1'), opacity: dim ? 0.4 : 1 }, svg);
+      var label = hasPrev ? signed(r.v) : eur(r.v);
+      txt(svg, neg ? x1 - 6 : x1 + 6, y + rowH / 2 + 4, label, { class: 'lbl', 'text-anchor': neg ? 'end' : 'start' });
+      var hit = el('rect', { x: 0, y: y, width: W, height: rowH, fill: 'transparent' }, svg);
+      hit.addEventListener('pointerenter', function () {
+        placeTip(tip, svg, W, H, (x0 + x1) / 2, y + 6, esc(r.reg) + '<br>' + L[0] + ': ' + eur(r.cur) + (hasPrev ? '<br>' + L[1] + ': ' + eur(r.prev) + '<br>Visits: ' + int(r.vc) + ' vs ' + int(r.vp) : '<br>Visits: ' + int(r.vc)));
+      });
+      hit.addEventListener('pointerleave', function () { tip.hidden = true; });
+    });
+    if (hasPrev) el('line', { x1: X(0), x2: X(0), y1: 0, y2: H, stroke: css('--ink'), 'stroke-width': 1 }, svg);
+  }
+
+  // Q1: monthly revenue line over monthly visit bars, sharing one time axis.
+  function renderMonthly() {
+    var host = document.getElementById('monthly-chart'); host.innerHTML = '';
+    var months = D.months, rev = {}, vis = {};
+    D.sales.forEach(function (r) { if (inRegion(r[1])) rev[r[0]] = (rev[r[0]] || 0) + r[5]; });
+    D.visits.forEach(function (r) { if (inRegion(r[1])) vis[r[0]] = (vis[r[0]] || 0) + r[3]; });
+    var R = months.map(function (k) { return rev[k] || 0; }), V = months.map(function (k) { return vis[k] || 0; });
+    document.getElementById('monthly-title').textContent = 'Revenue and visits by month, ' + (state.region || 'all regions');
+    document.getElementById('monthly-sub').textContent = 'Net revenue per month (line) and rep visits per month (bars), Jan 2024–Sep 2026.' + (!state.region || state.region === 'Sul' ? ' The dashed line marks 1 Jan 2026, when REP12 (Sul) left.' : '');
+    var W = 480, H = 300, m = { l: 48, r: 12, t: 12, b: 26 }, split = 170, gap = 30;
+    var svg = el('svg', { viewBox: '0 0 ' + W + ' ' + H, role: 'img', 'aria-label': 'Monthly revenue and visits' }, host);
+    var bw = (W - m.l - m.r) / months.length, X = function (i) { return m.l + (i + 0.5) * bw; };
+    var w = win('cur'), i0 = months.indexOf(w[0]), i1 = months.indexOf(w[1]);
+    el('rect', { x: m.l + i0 * bw, y: m.t, width: (i1 - i0 + 1) * bw, height: H - m.t - m.b, fill: css('--signal-soft') }, svg);
+    var maxR = Math.max.apply(null, R) || 1, stepR = niceStep(maxR), topR = Math.ceil(maxR / stepR) * stepR;
+    var YR = function (v) { return split - v / topR * (split - m.t); };
+    for (var v = 0; v <= topR + 1e-9; v += stepR) { el('line', { x1: m.l, x2: W - m.r, y1: YR(v), y2: YR(v), stroke: css('--grid'), 'stroke-width': 1 }, svg); txt(svg, m.l - 8, YR(v) + 4, v >= 1e6 ? '€' + +(v / 1e6).toFixed(1) + 'M' : eur(v), { 'text-anchor': 'end' }); }
+    var maxV = Math.max.apply(null, V) || 1, stepV = niceStep(maxV, 2), topV = Math.ceil(maxV / stepV) * stepV, vTop = split + gap, vBot = H - m.b;
+    var YV = function (v) { return vBot - v / topV * (vBot - vTop); };
+    for (var u = 0; u <= topV + 1e-9; u += stepV) { el('line', { x1: m.l, x2: W - m.r, y1: YV(u), y2: YV(u), stroke: css('--grid'), 'stroke-width': 1 }, svg); txt(svg, m.l - 8, YV(u) + 4, int(u), { 'text-anchor': 'end' }); }
+    V.forEach(function (v, i) { el('rect', { x: X(i) - bw * 0.35, y: YV(v), width: bw * 0.7, height: vBot - YV(v), rx: 1.5, fill: css('--seq-2') }, svg); });
+    var d = R.map(function (v, i) { return (i ? 'L' : 'M') + X(i).toFixed(1) + ' ' + YR(v).toFixed(1); }).join('');
+    el('path', { d: d, fill: 'none', stroke: css('--s1'), 'stroke-width': 2.5, 'stroke-linejoin': 'round' }, svg);
+    months.forEach(function (k, i) { if (k.slice(5) === '01') txt(svg, X(i), H - 8, k.slice(0, 4), { 'text-anchor': 'middle' }); });
+    if (!state.region || state.region === 'Sul') {
+      var j = months.indexOf('2026-01'), xl = m.l + j * bw;
+      el('line', { x1: xl, x2: xl, y1: m.t, y2: vBot, stroke: css('--ink'), 'stroke-width': 1, 'stroke-dasharray': '3 3' }, svg);
+      txt(svg, xl - 4, m.t + 10, 'REP12 leaves', { 'text-anchor': 'end', class: 'lbl' });
+    }
+    var cross = el('line', { y1: m.t, y2: vBot, stroke: css('--muted'), 'stroke-width': 1, 'stroke-dasharray': '3 3', visibility: 'hidden' }, svg);
+    var dot = el('circle', { r: 4, fill: css('--s1'), stroke: css('--sheet'), 'stroke-width': 2, visibility: 'hidden' }, svg);
+    var hit = el('rect', { x: m.l, y: m.t, width: W - m.l - m.r, height: H - m.t - m.b, fill: 'transparent' }, svg);
+    var tip = tipFor(host);
+    hit.addEventListener('pointermove', function (evt) {
+      var b = svg.getBoundingClientRect(), px = (evt.clientX - b.left) / b.width * W;
+      var i = Math.max(0, Math.min(months.length - 1, Math.floor((px - m.l) / bw)));
+      cross.setAttribute('x1', X(i)); cross.setAttribute('x2', X(i)); cross.setAttribute('visibility', 'visible');
+      dot.setAttribute('cx', X(i)); dot.setAttribute('cy', YR(R[i])); dot.setAttribute('visibility', 'visible');
+      var py = months.indexOf((Number(months[i].slice(0, 4)) - 1) + months[i].slice(4));
+      placeTip(tip, svg, W, H, X(i), YR(R[i]), ymLabel(months[i]) + '<br>Net revenue: ' + eur(R[i]) + (py >= 0 ? ' (' + signed(change(R[i], R[py])) + ' on a year earlier)' : '') + '<br>Visits: ' + int(V[i]));
+    });
+    hit.addEventListener('pointerleave', function () { cross.setAttribute('visibility', 'hidden'); dot.setAttribute('visibility', 'hidden'); tip.hidden = true; });
+  }
+
+  function repStats() {
+    return D.meta.reps.map(function (rep) {
+      var s = sales('cur', function (r) { return r[2] === rep[0]; }), b = buyers('cur', '', rep[0]);
+      return { id: rep[0], name: rep[1], region: rep[2], left: rep[3], g: s.g, n: s.n, k: s.k, disc: s.g ? 1 - s.n / s.g : null, margin: s.n ? (s.n - s.k) / s.n : null, rpc: b ? s.n / b : null, buyers: b };
+    }).filter(function (r) { return r.n > 0; });
+  }
+
+  // Q2: scatter of discount against margin, bubble area by revenue.
+  function renderScatter(reps) {
+    var host = document.getElementById('scatter-chart'); host.innerHTML = '';
+    var W = 480, H = 280, m = { l: 44, r: 16, t: 14, b: 34 };
+    var svg = el('svg', { viewBox: '0 0 ' + W + ' ' + H, role: 'img', 'aria-label': 'Discount and gross margin by rep' }, host);
+    var xs = reps.map(function (r) { return r.disc; }), ys = reps.map(function (r) { return r.margin; });
+    var x0 = Math.floor((Math.min.apply(null, xs) - 0.01) * 50) / 50, x1 = Math.ceil((Math.max.apply(null, xs) + 0.01) * 50) / 50;
+    var y0 = Math.floor((Math.min.apply(null, ys) - 0.01) * 50) / 50, y1 = Math.ceil((Math.max.apply(null, ys) + 0.01) * 50) / 50;
+    var X = function (v) { return m.l + (v - x0) / (x1 - x0) * (W - m.l - m.r); }, Y = function (v) { return H - m.b - (v - y0) / (y1 - y0) * (H - m.t - m.b); };
+    for (var a = x0; a <= x1 + 1e-9; a += 0.02) { el('line', { x1: X(a), x2: X(a), y1: m.t, y2: H - m.b, stroke: css('--grid'), 'stroke-width': 1 }, svg); txt(svg, X(a), H - m.b + 14, Math.round(a * 100) + '%', { 'text-anchor': 'middle' }); }
+    for (var b = y0; b <= y1 + 1e-9; b += 0.02) { el('line', { x1: m.l, x2: W - m.r, y1: Y(b), y2: Y(b), stroke: css('--grid'), 'stroke-width': 1 }, svg); txt(svg, m.l - 8, Y(b) + 4, Math.round(b * 100) + '%', { 'text-anchor': 'end' }); }
+    txt(svg, W - m.r, H - 4, 'Discount off list price →', { 'text-anchor': 'end' });
+    txt(svg, m.l + 4, m.t + 2, '↑ Gross margin', {});
+    var maxN = Math.max.apply(null, reps.map(function (r) { return r.n; }));
+    var tip = tipFor(host);
+    reps.slice().sort(function (p, q) { return q.n - p.n; }).forEach(function (r) {
+      var on = inRegion(r.region), out = r.disc > 0.1;
+      var c = el('circle', { cx: X(r.disc), cy: Y(r.margin), r: 5 + 11 * Math.sqrt(r.n / maxN), fill: css(out ? '--pt' : '--s1'), 'fill-opacity': on ? 0.75 : 0.18, stroke: css('--sheet'), 'stroke-width': 1.5 }, svg);
+      if (out || (state.region && on)) txt(svg, X(r.disc) + (out ? -16 : 14), Y(r.margin) + 4, r.id, { class: 'lbl', 'text-anchor': out ? 'end' : 'start' });
+      c.addEventListener('pointerenter', function () { placeTip(tip, svg, W, H, X(r.disc), Y(r.margin) - 8, esc(r.name) + ' (' + r.id + ') · ' + esc(shortRegion(r.region)) + '<br>Discount ' + pct(r.disc) + ' · margin ' + pct(r.margin) + '<br>Net revenue ' + eur(r.n)); });
+      c.addEventListener('pointerleave', function () { tip.hidden = true; });
+    });
+    document.getElementById('scatter-sub').textContent = 'Each circle is a rep, sized by net revenue, ' + PERIOD_LABEL[state.period][0] + '.' + (state.region ? ' Reps outside ' + state.region + ' are faded.' : '');
+  }
+
+  function renderReps(reps) {
+    var shown = reps.filter(function (r) { return inRegion(r.region); }).sort(function (a, b) { return b.disc - a.disc; });
+    var top = reps.slice().sort(function (a, b) { return b.disc - a.disc; })[0];
+    var others = reps.filter(function (r) { return r.id !== top.id; }), og = 0, on = 0, ok = 0;
+    others.forEach(function (r) { og += r.g; on += r.n; ok += r.k; });
+    var peerDisc = 1 - on / og, extra = top.g * (top.disc - peerDisc);
+    document.getElementById('reps-sub').textContent = top.id + ' discounts ' + pct(top.disc) + ' against ' + pct(peerDisc) + ' for the other reps; margin ' + pct(top.margin) + ' against ' + pct((on - ok) / on) + '. Extra discount at ' + top.id + "'s list-price sales: " + eur(extra) + ', ' + PERIOD_LABEL[state.period][0] + '.';
+    var head = '<thead><tr><th>Rep</th><th class="l">Region</th><th>Net revenue</th><th>Discount</th><th>Margin</th><th>Per customer</th></tr></thead>';
+    var body = shown.map(function (r) {
+      return '<tr' + (r.id === top.id ? ' class="hl"' : '') + '><td>' + r.id + (r.left ? ' <span class="note">left ' + r.left.slice(0, 7) + '</span>' : '') + '</td><td class="l">' + esc(shortRegion(r.region)) + '</td><td>' + eur(r.n) + '</td><td>' + pct(r.disc) + '</td><td>' + pct(r.margin) + '</td><td>' + (r.rpc == null ? '–' : eur(r.rpc)) + '</td></tr>';
+    }).join('');
+    document.getElementById('reps-table').innerHTML = head + '<tbody>' + body + '</tbody>';
+  }
+
+  // Q3: call list and recency histogram (snapshot).
+  function renderCalls() {
+    var rows = D.call.filter(function (c) { return inRegion(c[4]); });
+    var tot = rows.reduce(function (s, c) { return s + c[11]; }, 0);
+    document.getElementById('call-sub').textContent = rows.length + ' customers in ' + (state.region || 'all regions') + ' with no visit for more than 60 days on 30 Sep 2026; together they bought ' + eur(tot) + ' in the last 12 months. Top 12 by that revenue; Days = days since the last visit.';
+    var head = '<thead><tr><th>Customer</th>' + (state.region ? '' : '<th class="l">Region</th>') + '<th class="l">Rep</th><th>Days</th><th>12 m</th></tr></thead>';
+    var body = rows.slice(0, 12).map(function (c) {
+      return '<tr><td>' + esc(c[2]) + '<br><span class="note">' + esc(c[3]) + '</span></td>' + (state.region ? '' : '<td class="l">' + esc(shortRegion(c[4])) + '</td>') + '<td class="l">' + c[6] + '</td><td>' + c[8] + '</td><td>' + eur(c[11]) + '</td></tr>';
+    }).join('');
+    document.getElementById('call-table').innerHTML = rows.length ? head + '<tbody>' + body + '</tbody>' : '<tbody><tr><td class="empty">No customers in this selection.</td></tr></tbody>';
+  }
+
+  function renderRecency() {
+    var host = document.getElementById('recency-chart'); host.innerHTML = '';
+    var bands = [0, 30, 60, 90, 120, 150, 180], cnt = bands.map(function () { return 0; }), n = 0;
+    D.recency.forEach(function (r) { if (!inRegion(r[0])) return; var i = bands.indexOf(r[1]); if (i >= 0) { cnt[i] += r[2]; n += r[2]; } });
+    document.getElementById('recency-sub').textContent = 'Customers by days since their last visit on 30 Sep 2026, ' + (state.region || 'all regions') + ' (' + int(n) + ' customers). Orange bars are past the 60-day line.';
+    var W = 480, H = 240, m = { l: 40, r: 8, t: 18, b: 26 };
+    var svg = el('svg', { viewBox: '0 0 ' + W + ' ' + H, role: 'img', 'aria-label': 'Customers by days since last visit' }, host);
+    var maxV = Math.max.apply(null, cnt) || 1, step = niceStep(maxV), top = Math.ceil(maxV / step) * step;
+    var Y = function (v) { return H - m.b - v / top * (H - m.t - m.b); }, bw = (W - m.l - m.r) / bands.length;
+    for (var v = 0; v <= top + 1e-9; v += step) { el('line', { x1: m.l, x2: W - m.r, y1: Y(v), y2: Y(v), stroke: css('--grid'), 'stroke-width': 1 }, svg); txt(svg, m.l - 8, Y(v) + 4, int(v), { 'text-anchor': 'end' }); }
+    var tip = tipFor(host);
+    bands.forEach(function (b, i) {
+      var x = m.l + i * bw, label = b === 180 ? '180+' : b + '–' + (b + 29);
+      el('rect', { x: x + bw * 0.12, y: Y(cnt[i]), width: bw * 0.76, height: Y(0) - Y(cnt[i]), rx: 3, fill: css(b >= 60 ? '--s2' : '--s1') }, svg);
+      txt(svg, x + bw / 2, H - 8, label, { 'text-anchor': 'middle' });
+      txt(svg, x + bw / 2, Y(cnt[i]) - 6, int(cnt[i]), { 'text-anchor': 'middle', class: 'lbl' });
+      var hit = el('rect', { x: x, y: m.t, width: bw, height: H - m.t - m.b, fill: 'transparent' }, svg);
+      hit.addEventListener('pointerenter', function () { placeTip(tip, svg, W, H, x + bw / 2, Y(cnt[i]), label + ' days since last visit<br>' + int(cnt[i]) + ' customers (' + pct(cnt[i] / n, 0) + ')'); });
+      hit.addEventListener('pointerleave', function () { tip.hidden = true; });
+    });
+  }
+
+  // Q4: stacked horizontal bars of open receivables by aging bucket.
+  function renderAging() {
+    var host = document.getElementById('aging-chart'); host.innerHTML = '';
+    var segs = {}, total = 0;
+    D.aging.forEach(function (r) { if (!inRegion(r[0])) return; var s = segs[r[1]] = segs[r[1]] || { seg: r[1], b: [0, 0, 0, 0, 0], t: 0 }; var i = BUCKETS.indexOf(r[2]); s.b[i] += r[4]; s.t += r[4]; total += r[4]; });
+    var rows = Object.keys(segs).map(function (k) { return segs[k]; }).sort(function (a, b) { return b.b[4] - a.b[4]; });
+    document.getElementById('aging-sub').textContent = 'Unpaid invoices on 30 Sep 2026 by days past the due date, ' + (state.region || 'all regions') + ': ' + eur(total) + ' open, amounts with VAT.';
+    document.getElementById('aging-legend').innerHTML = BUCKETS.map(function (b, i) { return '<span><i class="sq" style="background:var(' + BUCKET_COLOR[i] + ')"></i>' + (b === 'Not due' ? b : b + ' days') + '</span>'; }).join('');
+    var W = 480, rowH = 40, m = { l: 118, r: 52, t: 4, b: 4 }, H = m.t + m.b + rows.length * rowH;
+    var svg = el('svg', { viewBox: '0 0 ' + W + ' ' + H, role: 'img', 'aria-label': 'Open receivables by segment and aging bucket' }, host);
+    var maxT = Math.max.apply(null, rows.map(function (r) { return r.t; })) || 1;
+    var X = function (v) { return v / maxT * (W - m.l - m.r); };
+    var tip = tipFor(host);
+    rows.forEach(function (r, i) {
+      var y = m.t + i * rowH, x = m.l;
+      txt(svg, 8, y + rowH / 2 + 4, r.seg, { class: 'lbl' });
+      r.b.forEach(function (v, k) { if (v <= 0) return; el('rect', { x: x, y: y + 9, width: Math.max(1, X(v)), height: rowH - 18, fill: css(BUCKET_COLOR[k]) }, svg); x += X(v); });
+      txt(svg, x + 6, y + rowH / 2 + 4, eur(r.t), { class: 'lbl' });
+      var hit = el('rect', { x: 0, y: y, width: W, height: rowH, fill: 'transparent' }, svg);
+      hit.addEventListener('pointerenter', function () { placeTip(tip, svg, W, H, m.l + X(r.t) / 2, y + 6, esc(r.seg) + BUCKETS.map(function (b, k) { return '<br>' + b + ': ' + eur(r.b[k]); }).join('')); });
+      hit.addEventListener('pointerleave', function () { tip.hidden = true; });
+    });
+    if (!rows.length) host.innerHTML = '<p class="empty">No open receivables in this selection.</p>';
+  }
+
+  function renderPay() {
+    var segs = {}, T = { billed: 0, od: 0 };
+    D.pay.forEach(function (r) { if (!inRegion(r[0])) return; var s = segs[r[1]] = segs[r[1]] || { seg: r[1], billed: 0, open: 0, od: 0, late: 0, paid: 0 }; s.billed += r[2]; s.open += r[3]; s.od += r[4]; s.late += r[5]; s.paid += r[6]; T.billed += r[2]; T.od += r[4]; });
+    var rows = Object.keys(segs).map(function (k) { return segs[k]; }).sort(function (a, b) { return b.od - a.od; });
+    var head = '<thead><tr><th>Segment</th><th>Billing</th><th>Open</th><th>90+ days</th><th>Share of 90+</th><th>Days late</th></tr></thead>';
+    var body = rows.map(function (s, i) { return '<tr' + (i === 0 ? ' class="hl"' : '') + '><td>' + esc(s.seg) + '</td><td>' + pct(s.billed / T.billed, 0) + '</td><td>' + eur(s.open) + '</td><td>' + eur(s.od) + '</td><td>' + (T.od ? pct(s.od / T.od, 0) : '–') + '</td><td>' + (s.paid ? (s.late / s.paid).toFixed(1) : '–') + '</td></tr>'; }).join('');
+    document.getElementById('pay-table').innerHTML = head + '<tbody>' + body + '</tbody>';
+  }
+
+  // Q5: seasonal index (1.0 = the category's average month), complete years 2024 and 2025.
+  function seasonData() {
+    var acc = {};
+    D.sales.forEach(function (r) { var y = r[0].slice(0, 4); if ((y !== '2024' && y !== '2025') || !inRegion(r[1])) return; var a = acc[r[3]] = acc[r[3]] || MONTHS.map(function () { return 0; }); a[Number(r[0].slice(5, 7)) - 1] += r[5] / 2; });
+    return Object.keys(acc).map(function (c) { var a = acc[c], mean = a.reduce(function (s, v) { return s + v; }, 0) / 12; return { cat: c, avg: a, idx: a.map(function (v) { return v / mean; }) }; });
+  }
+  function renderSeason() {
+    var host = document.getElementById('season-chart'); host.innerHTML = '';
+    var cats = seasonData();
+    document.getElementById('season-sub').textContent = 'Average monthly net revenue ÷ the category\'s average month, 2024 and 2025, ' + (state.region || 'all regions') + '. 1.0 = an average month.';
+    var W = 480, H = 260, m = { l: 36, r: 16, t: 12, b: 26 };
+    var svg = el('svg', { viewBox: '0 0 ' + W + ' ' + H, role: 'img', 'aria-label': 'Seasonal index by category and month' }, host);
+    var all = []; cats.forEach(function (c) { all = all.concat(c.idx); });
+    var lo = Math.min(0.5, Math.min.apply(null, all)), hi = Math.max(1.5, Math.max.apply(null, all));
+    var step = 0.25, minV = Math.floor(lo / step) * step, maxV = Math.ceil(hi / step) * step;
+    var X = function (i) { return m.l + i / 11 * (W - m.l - m.r); }, Y = function (v) { return H - m.b - (v - minV) / (maxV - minV) * (H - m.t - m.b); };
+    for (var v = minV; v <= maxV + 1e-9; v += step) { var one = Math.abs(v - 1) < 1e-9; el('line', { x1: m.l, x2: W - m.r, y1: Y(v), y2: Y(v), stroke: css(one ? '--muted' : '--grid'), 'stroke-width': 1, 'stroke-dasharray': one ? '2 3' : 'none' }, svg); if (Math.abs(v * 2 - Math.round(v * 2)) < 1e-9) txt(svg, m.l - 8, Y(v) + 4, v.toFixed(1), { 'text-anchor': 'end' }); }
+    MONTHS.forEach(function (mo, i) { txt(svg, X(i), H - 8, mo, { 'text-anchor': 'middle' }); });
+    var color = function (c) { return c === 'Vaccines' ? '--s1' : c === 'Parasiticides' ? '--s2' : '--muted'; };
+    cats.sort(function (a, b) { return (color(a.cat) === '--muted' ? 0 : 1) - (color(b.cat) === '--muted' ? 0 : 1); }).forEach(function (c) {
+      var hl = color(c.cat) !== '--muted';
+      el('path', { d: c.idx.map(function (v, i) { return (i ? 'L' : 'M') + X(i).toFixed(1) + ' ' + Y(v).toFixed(1); }).join(''), fill: 'none', stroke: css(color(c.cat)), 'stroke-width': hl ? 2.5 : 1.25, 'stroke-opacity': hl ? 1 : 0.6, 'stroke-linejoin': 'round' }, svg);
+    });
+    var cross = el('line', { y1: m.t, y2: H - m.b, stroke: css('--muted'), 'stroke-width': 1, 'stroke-dasharray': '3 3', visibility: 'hidden' }, svg);
+    var hit = el('rect', { x: m.l - 10, y: m.t, width: W - m.l - m.r + 20, height: H - m.t - m.b, fill: 'transparent' }, svg);
+    var tip = tipFor(host);
+    hit.addEventListener('pointermove', function (evt) {
+      var b = svg.getBoundingClientRect(), px = (evt.clientX - b.left) / b.width * W, i = Math.max(0, Math.min(11, Math.round((px - m.l) / (W - m.l - m.r) * 11)));
+      cross.setAttribute('x1', X(i)); cross.setAttribute('x2', X(i)); cross.setAttribute('visibility', 'visible');
+      var top = Math.max.apply(null, cats.map(function (c) { return c.idx[i]; }));
+      placeTip(tip, svg, W, H, X(i), Y(top), MONTHS[i] + cats.slice().sort(function (p, q) { return q.idx[i] - p.idx[i]; }).map(function (c) { return '<br>' + esc(c.cat) + ': ' + c.idx[i].toFixed(2); }).join(''));
+    });
+    hit.addEventListener('pointerleave', function () { cross.setAttribute('visibility', 'hidden'); tip.hidden = true; });
+    var avg = function (a, ms) { return ms.reduce(function (s, k) { return s + a[k]; }, 0) / ms.length; };
+    var rows = cats.map(function (c) { var w = avg(c.avg, [11, 0, 1]); return { cat: c.cat, sp: avg(c.avg, [2, 3, 4]) / w, su: avg(c.avg, [5, 6, 7]) / w }; }).sort(function (a, b) { return Math.max(b.sp, b.su) - Math.max(a.sp, a.su); });
+    document.getElementById('season-table').innerHTML = '<thead><tr><th>Category</th><th>Spring (Mar–May)</th><th>Summer (Jun–Aug)</th></tr></thead><tbody>' + rows.map(function (r) {
+      return '<tr><td>' + esc(r.cat) + '</td><td' + (r.sp > 1.5 ? ' class="hl"' : '') + '>' + r.sp.toFixed(1) + '×</td><td' + (r.su > 1.5 ? ' class="hl"' : '') + '>' + r.su.toFixed(1) + '×</td></tr>';
+    }).join('') + '</tbody>';
+  }
+
+  function render() {
+    document.getElementById('reset').hidden = state.region === DEF.region && state.period === DEF.period;
+    var reps = repStats();
+    renderKpis(); renderRegions(); renderMonthly(); renderScatter(reps); renderReps(reps); renderCalls(); renderRecency(); renderAging(); renderPay(); renderSeason();
+  }
+  function syncControls() {
+    document.getElementById('region-sel').value = state.region;
+    document.querySelectorAll('#period-seg button').forEach(function (x) { x.setAttribute('aria-pressed', String(x.dataset.period === state.period)); });
+  }
+  document.getElementById('period-seg').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    state.period = b.dataset.period; syncControls(); render();
+  });
+  document.getElementById('region-sel').addEventListener('change', function () { state.region = this.value; render(); });
+  document.getElementById('reset').addEventListener('click', function () { state = Object.assign({}, DEF); syncControls(); render(); });
+  if (window.matchMedia) window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function () { if (D.meta) render(); });
+  new MutationObserver(function () { if (D.meta) render(); }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+  var files = ['sales', 'visits', 'call_list', 'recency', 'aging', 'payments', 'buyers', 'meta'];
+  Promise.all(files.map(function (n) { return fetch('data/' + n + '.json').then(function (r) { if (!r.ok) throw new Error(n); return r.json(); }); }))
+    .then(function (res) {
+      D.sales = res[0]; D.visits = res[1]; D.call = res[2]; D.recency = res[3]; D.aging = res[4]; D.pay = res[5]; D.buyers = res[6]; D.meta = res[7];
+      D.months = Array.from(new Set(D.sales.map(function (r) { return r[0]; }))).sort();
+      document.getElementById('meta-rows').textContent = 'Order lines: ' + int(D.meta.fact_rows);
+      var sel = document.getElementById('region-sel');
+      D.meta.regions.forEach(function (r) { var o = document.createElement('option'); o.value = r; o.textContent = r; sel.appendChild(o); });
+      syncControls(); render();
+    })
+    .catch(function () { document.getElementById('kpis').innerHTML = '<p>The data files did not load. Reload the page to try again.</p>'; });
+})();
+</script>

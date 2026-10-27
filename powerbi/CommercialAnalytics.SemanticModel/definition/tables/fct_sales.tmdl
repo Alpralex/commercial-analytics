@@ -1,0 +1,159 @@
+table fct_sales
+	lineageTag: 68d04650-b01e-4066-9902-be475f4a197e
+
+	measure 'Net Revenue' = SUM ( fct_sales[net_amount] )
+		formatString: #,0 €
+		lineageTag: d16ec226-d089-47aa-8f2a-a5cf3daba3ea
+
+	/// Sales at list price, before discount.
+	measure 'Gross Sales' = SUM ( fct_sales[gross_amount] )
+		formatString: #,0 €
+		lineageTag: bc189d58-0ff8-4e88-b3c2-cbee7657f0d1
+
+	measure 'Cost of Sales' = SUM ( fct_sales[cost_amount] )
+		formatString: #,0 €
+		lineageTag: 00fbee5a-2aeb-4a80-b3c6-28aee7368c9e
+
+	measure 'Units Sold' = SUM ( fct_sales[quantity] )
+		formatString: #,0
+		lineageTag: 39764b1a-e4c4-4aac-b8b5-f0a929ba2b59
+
+	measure 'Gross Margin' = [Net Revenue] - [Cost of Sales]
+		formatString: #,0 €
+		lineageTag: 06d888b8-1a78-4a01-a56e-d800344c491c
+
+	measure 'Gross Margin %' = DIVIDE ( [Gross Margin], [Net Revenue] )
+		formatString: 0.0%
+		lineageTag: 5ba8062f-1187-4f70-b5d0-128e3e520a84
+
+	measure 'Discount Amount' = [Gross Sales] - [Net Revenue]
+		formatString: #,0 €
+		lineageTag: f79c8661-4a8e-48ca-8485-169f49eb962b
+
+	/// 1 - net / gross, as in the Qlik master item.
+	measure 'Discount %' = DIVIDE ( [Discount Amount], [Gross Sales] )
+		formatString: 0.0%
+		lineageTag: 79d74039-1952-4ee0-b077-1362c72fd4cd
+
+	/// Year to date up to the last date in context. With no date filter that is 1 Jan to 30 Sep 2026, because dim_date ends on the snapshot date.
+	measure 'Revenue YTD' = CALCULATE ( [Net Revenue], DATESYTD ( dim_date[date_day] ) )
+		formatString: #,0 €
+		lineageTag: b49a1f2d-041b-40be-9bf4-d8929440d5c1
+
+	measure 'Revenue PYTD' = CALCULATE ( [Net Revenue], SAMEPERIODLASTYEAR ( DATESYTD ( dim_date[date_day] ) ) )
+		formatString: #,0 €
+		lineageTag: 160beb50-3e50-45ac-8a4c-69f2d6cc91c9
+
+	measure 'Revenue YTD vs PY %' = DIVIDE ( [Revenue YTD] - [Revenue PYTD], [Revenue PYTD] )
+		formatString: +0.0%;-0.0%;0.0%
+		lineageTag: df674c40-1d67-4d5e-bfb0-0fe573c41d1d
+
+	measure 'Revenue PY' = CALCULATE ( [Net Revenue], SAMEPERIODLASTYEAR ( dim_date[date_day] ) )
+		formatString: #,0 €
+		lineageTag: b59a24db-e902-43f1-a20e-6b9ca668ea6e
+
+	measure 'Revenue vs PY %' = DIVIDE ( [Net Revenue] - [Revenue PY], [Revenue PY] )
+		formatString: +0.0%;-0.0%;0.0%
+		lineageTag: ce869615-83fd-433a-93a6-c9e1cc2acf85
+
+	/// The 365 days ending on the snapshot date, whatever the date filter.
+	measure 'Revenue L12M' =
+			VAR LastDay = CALCULATE ( MAX ( dim_date[date_day] ), ALL ( dim_date ) )
+			RETURN
+				CALCULATE ( [Net Revenue], DATESINPERIOD ( dim_date[date_day], LastDay, -365, DAY ) )
+		formatString: #,0 €
+		lineageTag: 73413a4e-a0de-4d7d-a359-1d2c076a3933
+
+	measure 'Revenue L12M at Risk' = CALCULATE ( [Revenue L12M], dim_customer[visit_recency] = "No visit 60+ days" )
+		formatString: #,0 €
+		lineageTag: 5800b4d8-06c2-4306-bedb-f27cc51f112d
+
+	measure 'Buying Customers' = DISTINCTCOUNT ( fct_sales[customer_id] )
+		formatString: #,0
+		lineageTag: af3cb211-d7b0-406a-a6fa-bd00bcfb363e
+
+	/// Buyers in the period over all customers in the selected region, segment or account rep (positivação).
+	measure 'Coverage %' =
+			DIVIDE (
+				[Buying Customers],
+				CALCULATE ( COUNTROWS ( dim_customer ), TREATAS ( VALUES ( dim_rep[rep_id] ), dim_customer[account_rep_id] ) )
+			)
+		formatString: 0.0%
+		lineageTag: dcd43a59-7d7e-45d1-8f57-1eb338426d56
+
+	measure 'Revenue per Customer' = DIVIDE ( [Net Revenue], [Buying Customers] )
+		formatString: #,0 €
+		lineageTag: eecc6bb0-6efd-4ee9-bdd6-e1deeaaf389e
+
+	measure 'Revenue per Visit' = DIVIDE ( [Net Revenue], [Visits] )
+		formatString: #,0 €
+		lineageTag: 554c5ed3-b8ac-4b09-a893-9913c9a2e0d4
+
+	column date_day
+		dataType: dateTime
+		formatString: yyyy-mm-dd
+		lineageTag: a5c69021-1b5a-44b0-b5b7-92082950ebcd
+		summarizeBy: none
+		sourceColumn: date_day
+
+	column customer_id
+		dataType: string
+		lineageTag: 4862a693-028a-4809-b8eb-9f6f12b584aa
+		summarizeBy: none
+		sourceColumn: customer_id
+
+	column rep_id
+		dataType: string
+		lineageTag: 22514a90-dd89-4e1b-96cb-80a01e2607a6
+		summarizeBy: none
+		sourceColumn: rep_id
+
+	column category
+		dataType: string
+		lineageTag: 4a507e89-124b-4242-9cac-30bc2d364979
+		summarizeBy: none
+		sourceColumn: category
+
+	column order_lines
+		dataType: int64
+		formatString: #,0
+		lineageTag: 49a52164-3bc8-4422-92ba-4ca3f0e05c0f
+		summarizeBy: sum
+		sourceColumn: order_lines
+
+	column quantity
+		dataType: int64
+		formatString: #,0
+		lineageTag: d628bc28-1414-4770-8fe7-e67ed97d6959
+		summarizeBy: sum
+		sourceColumn: quantity
+
+	column gross_amount
+		dataType: double
+		formatString: #,0 €
+		lineageTag: c94bf496-1655-4866-87c2-3d4205ae0297
+		summarizeBy: sum
+		sourceColumn: gross_amount
+
+	column net_amount
+		dataType: double
+		formatString: #,0 €
+		lineageTag: 31e75cd0-14e5-4c39-99d6-f3f1ce643adb
+		summarizeBy: sum
+		sourceColumn: net_amount
+
+	column cost_amount
+		dataType: double
+		formatString: #,0 €
+		lineageTag: 81289fc7-5e94-45ea-89ac-70e22204720d
+		summarizeBy: sum
+		sourceColumn: cost_amount
+
+	partition fct_sales = m
+		mode: import
+		source =
+				let
+					Source = Parquet.Document ( File.Contents ( DataFolder & "fct_sales.parquet" ) )
+				in
+					Source
+

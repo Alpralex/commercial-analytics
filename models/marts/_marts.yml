@@ -1,0 +1,183 @@
+version: 2
+
+models:
+  - name: dim_date
+    description: Daily calendar, 1 Jan 2024 to the snapshot date (30 Sep 2026), with YTD, PYTD, L12M and P12M flags.
+    columns:
+      - name: date_day
+        tests: [unique, not_null]
+      - name: season
+        tests:
+          - accepted_values: {values: ['Winter', 'Spring', 'Summer', 'Autumn']}
+
+  - name: dim_customer
+    description: Customers with segment, region, account rep and recency on the snapshot date.
+    columns:
+      - name: customer_id
+        tests: [unique, not_null]
+      - name: segment
+        tests:
+          - not_null
+          - accepted_values: {values: ['Veterinary clinic', 'Pet shop', 'Livestock farm', 'Farm supply store']}
+      - name: region
+        tests:
+          - not_null
+          - accepted_values: {values: ['Norte', 'Centro', 'Lisboa e Vale do Tejo', 'Sul']}
+      - name: account_rep_id
+        tests:
+          - not_null
+          - relationships: {to: ref('dim_rep'), field: rep_id}
+      - name: payment_terms_days
+        tests:
+          - accepted_values: {values: [30, 60], quote: false}
+      - name: visit_recency
+        tests:
+          - accepted_values: {values: ['No visit 60+ days', 'Visited in last 60 days']}
+      - name: customer_status
+        tests:
+          - accepted_values: {values: ['Active', 'Lapsing', 'Lost', 'Never ordered']}
+
+  - name: dim_product
+    description: SKUs with category, list price and unit cost.
+    columns:
+      - name: sku
+        tests: [unique, not_null]
+      - name: category
+        tests:
+          - not_null
+          - accepted_values: {values: ['Vaccines', 'Parasiticides', 'Pharmaceuticals', 'Pet food', 'Accessories', 'Hygiene']}
+
+  - name: dim_rep
+    description: Sales reps and their region. REP12 (Sul) left on 1 Jan 2026.
+    columns:
+      - name: rep_id
+        tests: [unique, not_null]
+      - name: region
+        tests:
+          - accepted_values: {values: ['Norte', 'Centro', 'Lisboa e Vale do Tejo', 'Sul']}
+
+  - name: fct_sales_lines
+    description: One row per order line. Gross at list price, net after discount, cost; excluding VAT.
+    tests:
+      - unique_combination: {columns: [order_id, sku]}
+    columns:
+      - name: order_date
+        tests:
+          - not_null
+          - relationships: {to: ref('dim_date'), field: date_day}
+      - name: customer_id
+        tests:
+          - not_null
+          - relationships: {to: ref('dim_customer'), field: customer_id}
+      - name: rep_id
+        tests:
+          - not_null
+          - relationships: {to: ref('dim_rep'), field: rep_id}
+      - name: sku
+        tests:
+          - not_null
+          - relationships: {to: ref('dim_product'), field: sku}
+      - name: net_amount
+        tests: [not_null]
+
+  - name: fct_visits
+    description: One row per rep visit to a customer.
+    tests:
+      - unique_combination: {columns: [visit_date, customer_id]}
+    columns:
+      - name: visit_date
+        tests:
+          - not_null
+          - relationships: {to: ref('dim_date'), field: date_day}
+      - name: customer_id
+        tests:
+          - relationships: {to: ref('dim_customer'), field: customer_id}
+      - name: rep_id
+        tests:
+          - relationships: {to: ref('dim_rep'), field: rep_id}
+      - name: visit_type
+        tests:
+          - accepted_values: {values: ['Planned', 'Follow-up']}
+
+  - name: fct_invoices
+    description: One row per invoice (amounts with VAT), with payment date, days late and aging on 30 Sep 2026.
+    columns:
+      - name: invoice_id
+        tests: [unique, not_null]
+      - name: order_id
+        tests: [unique, not_null]
+      - name: invoice_date
+        tests:
+          - relationships: {to: ref('dim_date'), field: date_day}
+      - name: customer_id
+        tests:
+          - relationships: {to: ref('dim_customer'), field: customer_id}
+      - name: aging_bucket
+        tests:
+          - not_null
+          - accepted_values: {values: ['Paid', 'Not due', '1-30', '31-60', '61-90', '90+']}
+
+  - name: mart_region_monthly
+    description: Q1. Net revenue, buyers, coverage and visits by region and month.
+    tests:
+      - unique_combination: {columns: [region, month_start]}
+    columns:
+      - name: region
+        tests:
+          - relationships: {to: ref('dim_customer'), field: region}
+
+  - name: mart_region_ytd
+    description: Q1. Revenue, buyers and visits Jan to Sep 2026 against Jan to Sep 2025, by region.
+    columns:
+      - name: region
+        tests: [unique, not_null]
+      - name: revenue_yoy_pct
+        tests: [not_null]
+
+  - name: mart_rep_pricing
+    description: Q2. Discount, gross margin and revenue per customer by rep, with the discount above the other reps in euros.
+    columns:
+      - name: rep_id
+        tests:
+          - unique
+          - relationships: {to: ref('dim_rep'), field: rep_id}
+
+  - name: mart_call_list
+    description: Q3. Customers with no visit for more than 60 days, ranked by last-12-month revenue.
+    columns:
+      - name: customer_id
+        tests:
+          - unique
+          - relationships: {to: ref('dim_customer'), field: customer_id}
+      - name: call_rank
+        tests: [unique, not_null]
+
+  - name: mart_receivables_aging
+    description: Q4. Open receivables on the snapshot date by segment, region and aging bucket.
+    tests:
+      - unique_combination: {columns: [segment, region, aging_bucket]}
+    columns:
+      - name: aging_bucket
+        tests:
+          - accepted_values: {values: ['Not due', '1-30', '31-60', '61-90', '90+']}
+
+  - name: mart_payment_by_segment
+    description: Q4. Share of billing, open and 90+ overdue receivables and average days late by segment.
+    columns:
+      - name: segment
+        tests: [unique, not_null]
+
+  - name: mart_seasonality
+    description: Q5. Average monthly net revenue and seasonal index by category and calendar month (2024 and 2025).
+    tests:
+      - unique_combination: {columns: [category, month_number]}
+    columns:
+      - name: category
+        tests:
+          - relationships: {to: ref('dim_product'), field: category}
+
+  - name: mart_category_seasons
+    description: Q5. Spring and summer against winter, by category.
+    columns:
+      - name: category
+        tests: [unique, not_null]
