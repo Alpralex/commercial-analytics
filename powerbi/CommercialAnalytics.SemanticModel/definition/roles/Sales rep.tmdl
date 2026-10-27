@@ -1,0 +1,12 @@
+/// Dynamic RLS: a rep sees only their own sales, visits and invoices, and only the customers they own.
+role 'Sales rep'
+	modelPermission: read
+
+	tablePermission dim_rep = [rep_id] IN CALCULATETABLE ( VALUES ( security_user_access[rep_id] ), security_user_access[user_email] = USERPRINCIPALNAME () )
+
+	tablePermission dim_customer = [account_rep_id] IN CALCULATETABLE ( VALUES ( security_user_access[rep_id] ), security_user_access[user_email] = USERPRINCIPALNAME () )
+
+	tablePermission security_user_access = [user_email] = USERPRINCIPALNAME ()
+
+	annotation PBI_Id = 05e05e4bdc154ae5a0989241d92f27b3
+

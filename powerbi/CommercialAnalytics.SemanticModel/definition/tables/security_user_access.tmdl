@@ -1,0 +1,48 @@
+/// Row-level security mapping: which user (UPN) may see which rep or region. Fictional users; no relationship, read by the Sales rep and Regional manager roles.
+table security_user_access
+	isHidden
+	lineageTag: dfd05ff4-3c1a-4f54-bf2f-1ecce501b32d
+
+	column user_email
+		dataType: string
+		isHidden
+		isNameInferred
+		isDataTypeInferred
+		lineageTag: 2e1311d9-0283-483c-b246-116d0d92c5e4
+		summarizeBy: none
+		sourceColumn: [user_email]
+
+	column rep_id
+		dataType: string
+		isHidden
+		isNameInferred
+		isDataTypeInferred
+		lineageTag: f36a1cdd-5a7b-435d-9410-e0edd9deb42c
+		summarizeBy: none
+		sourceColumn: [rep_id]
+
+	column region
+		dataType: string
+		isHidden
+		isNameInferred
+		isDataTypeInferred
+		lineageTag: 90672318-22b2-4549-abc7-93ff85736535
+		summarizeBy: none
+		sourceColumn: [region]
+
+	partition security_user_access = calculated
+		mode: import
+		source =
+				DATATABLE (
+					"user_email", STRING,
+					"rep_id", STRING,
+					"region", STRING,
+					{
+						{ "rep01@northwind.example", "REP01", BLANK () },
+						{ "rep07@northwind.example", "REP07", BLANK () },
+						{ "norte.manager@northwind.example", BLANK (), "Norte" },
+						{ "south.manager@northwind.example", BLANK (), "Lisboa e Vale do Tejo" },
+						{ "south.manager@northwind.example", BLANK (), "Sul" }
+					}
+				)
+

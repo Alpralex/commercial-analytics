@@ -1,0 +1,55 @@
+/// Calculation group: applies the same time comparison to any measure. Put 'Time view' on columns or in a slicer.
+table 'Time view'
+	lineageTag: 8b58472b-0b88-4b0f-9920-f0c0b05f691d
+
+	calculationGroup
+
+		/// The measure as filtered.
+		calculationItem Current = SELECTEDMEASURE ()
+
+		/// Same period one year earlier.
+		calculationItem 'Prior year' = CALCULATE ( SELECTEDMEASURE (), SAMEPERIODLASTYEAR ( dim_date[date_day] ) )
+
+		/// Change against the same period one year earlier.
+		calculationItem 'vs PY' =
+				VAR cur = SELECTEDMEASURE ()
+				VAR py = CALCULATE ( SELECTEDMEASURE (), SAMEPERIODLASTYEAR ( dim_date[date_day] ) )
+				RETURN IF ( NOT ISBLANK ( cur ) && NOT ISBLANK ( py ), cur - py )
+
+		/// Relative change against the same period one year earlier.
+		calculationItem 'vs PY %' =
+				VAR cur = SELECTEDMEASURE ()
+				VAR py = CALCULATE ( SELECTEDMEASURE (), SAMEPERIODLASTYEAR ( dim_date[date_day] ) )
+				RETURN IF ( NOT ISBLANK ( cur ), DIVIDE ( cur - py, py ) )
+
+			formatStringDefinition = "+0.0%;-0.0%;0.0%"
+
+		/// Year to date, up to the last date in context.
+		calculationItem YTD = CALCULATE ( SELECTEDMEASURE (), DATESYTD ( dim_date[date_day] ) )
+
+		/// Year to date one year earlier.
+		calculationItem 'Prior YTD' = CALCULATE ( SELECTEDMEASURE (), SAMEPERIODLASTYEAR ( DATESYTD ( dim_date[date_day] ) ) )
+
+		/// Relative change of the year to date against the prior year to date.
+		calculationItem 'YTD vs PY %' =
+				VAR ytd = CALCULATE ( SELECTEDMEASURE (), DATESYTD ( dim_date[date_day] ) )
+				VAR pytd = CALCULATE ( SELECTEDMEASURE (), SAMEPERIODLASTYEAR ( DATESYTD ( dim_date[date_day] ) ) )
+				RETURN IF ( NOT ISBLANK ( ytd ), DIVIDE ( ytd - pytd, pytd ) )
+
+			formatStringDefinition = "+0.0%;-0.0%;0.0%"
+
+	column 'Time view'
+		dataType: string
+		lineageTag: a49f58bc-be73-49b2-a7c5-13545ca132d0
+		summarizeBy: none
+		sourceColumn: Name
+		sortByColumn: Ordinal
+
+	column Ordinal
+		dataType: int64
+		formatString: 0
+		isHidden
+		lineageTag: 4bf8a804-1d69-4898-913c-bfe94950fb2d
+		summarizeBy: none
+		sourceColumn: Ordinal
+

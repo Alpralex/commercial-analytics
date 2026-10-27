@@ -1,0 +1,12 @@
+/// Dynamic RLS: a regional manager sees the reps and customers of the regions listed for them.
+role 'Regional manager'
+	modelPermission: read
+
+	tablePermission dim_rep = [rep_region] IN CALCULATETABLE ( VALUES ( security_user_access[region] ), security_user_access[user_email] = USERPRINCIPALNAME () )
+
+	tablePermission dim_customer = [region] IN CALCULATETABLE ( VALUES ( security_user_access[region] ), security_user_access[user_email] = USERPRINCIPALNAME () )
+
+	tablePermission security_user_access = [user_email] = USERPRINCIPALNAME ()
+
+	annotation PBI_Id = de4683fba25d4d23b3be2dd1278a673d
+

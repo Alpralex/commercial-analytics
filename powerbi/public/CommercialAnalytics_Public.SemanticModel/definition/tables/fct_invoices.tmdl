@@ -1,0 +1,122 @@
+table fct_invoices
+	lineageTag: 21415607-37a0-416c-a586-7b86ba67c1d1
+
+	/// Invoiced amount including 23% VAT.
+	measure 'Billed Amount' = SUM ( fct_invoices[invoice_amount] )
+		formatString: #,0 €
+		lineageTag: 746ea2dd-22cb-42c7-8972-ff45516551b4
+
+	measure 'Billing Share' = DIVIDE ( [Billed Amount], CALCULATE ( [Billed Amount], ALL ( dim_customer ) ) )
+		formatString: 0.0%
+		lineageTag: c4ed0e13-b777-478a-ba11-f7363f1fa6b8
+
+	/// Unpaid on the snapshot date (30 Sep 2026). Ignores date filters on purpose, like the Qlik master item.
+	measure 'Open Receivables' = CALCULATE ( SUM ( fct_invoices[open_amount] ), REMOVEFILTERS ( dim_date ) )
+		formatString: #,0 €
+		lineageTag: efe3d5a9-e006-40a3-8dcd-46124ac9f50f
+
+	measure 'Overdue 90+' = CALCULATE ( SUM ( fct_invoices[open_amount] ), fct_invoices[aging_bucket] = "90+", REMOVEFILTERS ( dim_date ) )
+		formatString: #,0 €
+		lineageTag: 4ebd3536-eecb-44a8-83f4-85455799efc2
+
+	/// Share of all 90+ overdue receivables.
+	measure 'Overdue 90+ Share' = DIVIDE ( [Overdue 90+], CALCULATE ( [Overdue 90+], ALL ( dim_customer ) ) )
+		formatString: 0.0%
+		lineageTag: 492fbb30-7955-47fc-bdee-11e4f083b7ed
+
+	/// Payment date minus due date, paid invoices only.
+	measure 'Avg Days Late' = AVERAGE ( fct_invoices[days_late] )
+		formatString: 0.0
+		lineageTag: de79f192-4078-4b35-b83d-55a18579d799
+
+	column invoice_id
+		dataType: string
+		isKey
+		lineageTag: 0a496c20-02b4-409b-9ee8-8120d21b1be8
+		summarizeBy: none
+		sourceColumn: invoice_id
+
+	column date_day
+		dataType: dateTime
+		formatString: yyyy-mm-dd
+		lineageTag: a0cbe392-5e14-40dc-96fc-ab4e74061dc8
+		summarizeBy: none
+		sourceColumn: date_day
+
+	column customer_id
+		dataType: string
+		lineageTag: 3108041e-16ac-4fe1-ae2a-1ea564771bce
+		summarizeBy: none
+		sourceColumn: customer_id
+
+	column rep_id
+		dataType: string
+		lineageTag: 024e33df-607d-43e5-8549-03dcd100e5a0
+		summarizeBy: none
+		sourceColumn: rep_id
+
+	column due_date
+		dataType: dateTime
+		formatString: yyyy-mm-dd
+		lineageTag: b5baf262-7206-40f8-bd29-66c5ead8f10e
+		summarizeBy: none
+		sourceColumn: due_date
+
+	column payment_date
+		dataType: dateTime
+		formatString: yyyy-mm-dd
+		lineageTag: 114adb00-cd96-4c48-acc0-0ac72c7522c6
+		summarizeBy: none
+		sourceColumn: payment_date
+
+	column invoice_amount
+		dataType: double
+		formatString: #,0 €
+		lineageTag: c101f452-e0e4-4c2a-acfd-d22e625cc764
+		summarizeBy: sum
+		sourceColumn: invoice_amount
+
+	column open_amount
+		dataType: double
+		formatString: #,0 €
+		lineageTag: 9958dd0f-902c-47c1-99ef-0d060aeea970
+		summarizeBy: sum
+		sourceColumn: open_amount
+
+	column days_late
+		dataType: int64
+		formatString: 0
+		lineageTag: df4c7aed-071c-4621-b8e8-62bae3a325f3
+		summarizeBy: none
+		sourceColumn: days_late
+
+	column days_overdue
+		dataType: int64
+		formatString: 0
+		lineageTag: 10ad5073-8a90-482a-9bdb-ecf3492848b0
+		summarizeBy: none
+		sourceColumn: days_overdue
+
+	column aging_bucket
+		dataType: string
+		lineageTag: 995e6403-d60c-48f8-a020-25d39c9e101e
+		summarizeBy: none
+		sourceColumn: aging_bucket
+		sortByColumn: aging_sort
+
+	column aging_sort
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: bc680aa8-59df-4788-ac8a-6e4015f67c05
+		summarizeBy: none
+		sourceColumn: aging_sort
+
+	partition fct_invoices = m
+		mode: import
+		source =
+				let
+					Source = Parquet.Document ( File.Contents ( DataFolder & "fct_invoices.parquet" ) )
+				in
+					Source
+

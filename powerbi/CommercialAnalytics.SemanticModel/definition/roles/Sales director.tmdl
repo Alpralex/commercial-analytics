@@ -1,0 +1,6 @@
+/// The sales director sees every region: no table filter.
+role 'Sales director'
+	modelPermission: read
+
+	annotation PBI_Id = 1cf7eac4bd204c77bbcbe21254aafd74
+
