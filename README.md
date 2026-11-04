@@ -1,5 +1,9 @@
 # Commercial analytics for a distributor
 
+[![Dashboard screenshot](https://guilhermerigonato.com/img/commercial.webp)](https://guilhermerigonato.com/commercial-analytics/)
+
+**Live:** [web dashboard](https://guilhermerigonato.com/commercial-analytics/) · [Power BI report (publish to web)](https://app.powerbi.com/view?r=eyJrIjoiN2IzMWEwZWUtNmQxYy00NGQ0LTgzZjctYzJhNzk0MDk3MmUxIiwidCI6IjY2MDMwOWU1LWI1YWEtNDQzNS1iMDU2LTJhYmViOGZmNDZjNyJ9) · [all projects](https://guilhermerigonato.com)
+
 A sales-director app for an animal-health distributor in Portugal: revenue, customer coverage,
 rep visits, discounting and receivables. It reproduces the kind of app I relied on for seven
 years in sales leadership at a distributor in Brazil, rebuilt on synthetic data so it can be public.
