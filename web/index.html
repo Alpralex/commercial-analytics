@@ -106,6 +106,16 @@ td.l, th.l { text-align: left; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 tr.hl td, td.hl, th.hl { background: var(--signal-soft); }
 .empty { font-size: 0.9rem; color: var(--muted); }
+.xf { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; font-size: 0.85rem; color: var(--muted); margin: -0.25rem 0 0.75rem; }
+.xf button { font: inherit; font-size: 0.8rem; padding: 0.1rem 0.5rem; border: 1px solid var(--rule); border-radius: 999px; background: var(--signal-soft); color: var(--ink); cursor: pointer; }
+.xf button:hover { border-color: var(--ink); }
+.chart svg rect.hit-x, tr.hit-x { cursor: pointer; }
+.chart svg rect.hit-x:focus { outline: none; }
+.chart svg rect.hit-x:focus-visible { stroke: var(--signal); stroke-width: 2; }
+tr.hit-x:hover td { background: var(--signal-soft); }
+tr.hit-x.on td { background: var(--signal-soft); font-weight: 600; }
+.chart svg circle.hit-x, .chart svg path.hit-x { cursor: pointer; }
+.chart svg circle.hit-x:focus { outline: none; }
 </style>
 
 
@@ -149,6 +159,7 @@ tr.hl td, td.hl, th.hl { background: var(--signal-soft); }
     </div>
     <button type="button" class="reset" id="reset" hidden>Reset</button>
   </div>
+  <p class="xf" id="xf" aria-live="polite"></p>
 
   <section class="kpis" aria-label="Headline numbers" id="kpis"></section>
 
@@ -215,7 +226,7 @@ tr.hl td, td.hl, th.hl { background: var(--signal-soft); }
     <div class="grid2">
       <div class="panel">
         <div><h2>Seasonal index by category</h2><p class="sub" id="season-sub"></p></div>
-        <div class="legend"><span><i style="background:var(--s1)"></i>Vaccines</span><span><i style="background:var(--s2)"></i>Parasiticides</span><span><i style="background:var(--muted)"></i>Other categories</span></div>
+        <div class="legend" id="season-legend"><span><i style="background:var(--s1)"></i>Vaccines</span><span><i style="background:var(--s2)"></i>Parasiticides</span><span><i style="background:var(--muted)"></i>Other categories</span></div>
         <div class="chart" id="season-chart"></div>
       </div>
       <div class="panel">
@@ -238,7 +249,7 @@ tr.hl td, td.hl, th.hl { background: var(--signal-soft); }
 
 <script>
 (function () {
-  var DEF = { region: '', period: 'ytd' };
+  var DEF = { region: '', period: 'ytd', rep: '', cat: '', seg: '', band: -1 };
   var state = Object.assign({}, DEF);
   var D = {};
   var NS = 'http://www.w3.org/2000/svg';
@@ -266,6 +277,17 @@ tr.hl td, td.hl, th.hl { background: var(--signal-soft); }
   function ymLabel(ym) { return MONTHS[Number(ym.slice(5, 7)) - 1] + ' ' + ym.slice(0, 4); }
   function shortRegion(r) { return r === 'Lisboa e Vale do Tejo' ? 'Lisboa e VT' : r; }
   function inRegion(r) { return !state.region || r === state.region; }
+  function inRep(r) { return !state.rep || r === state.rep; }
+  function inCat(c) { return !state.cat || c === state.cat; }
+  function inSeg(s) { return !state.seg || s === state.seg; }
+  function inBand(d) { return state.band < 0 || (state.band === 180 ? d >= 180 : d >= state.band && d < state.band + 30); }
+  // A click target over a mark: pointer and keyboard (Enter / Space) both run fn
+  function clickable(hit, fn, label) {
+    hit.setAttribute('class', ((hit.getAttribute('class') || '') + ' hit-x').trim()); hit.setAttribute('tabindex', '0'); hit.setAttribute('role', 'button');
+    if (label) hit.setAttribute('aria-label', label);
+    hit.addEventListener('click', fn);
+    hit.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fn(); } });
+  }
   function win(tag) { var p = D.meta.periods[state.period]; var a = tag === 'prev' ? p[2] : p[0], b = tag === 'prev' ? p[3] : p[1]; return a ? [a.slice(0, 7), b.slice(0, 7)] : null; }
   function inWin(ym, w) { return w && ym >= w[0] && ym <= w[1]; }
   function sales(tag, pred) {
@@ -323,6 +345,7 @@ tr.hl td, td.hl, th.hl { background: var(--signal-soft); }
       var label = hasPrev ? signed(r.v) : eur(r.v);
       txt(svg, neg ? x1 - 6 : x1 + 6, y + rowH / 2 + 4, label, { class: 'lbl', 'text-anchor': neg ? 'end' : 'start' });
       var hit = el('rect', { x: 0, y: y, width: W, height: rowH, fill: 'transparent' }, svg);
+      clickable(hit, function () { pickRegion(r.reg); }, 'Filter by ' + r.reg);
       hit.addEventListener('pointerenter', function () {
         placeTip(tip, svg, W, H, (x0 + x1) / 2, y + 6, esc(r.reg) + '<br>' + L[0] + ': ' + eur(r.cur) + (hasPrev ? '<br>' + L[1] + ': ' + eur(r.prev) + '<br>Visits: ' + int(r.vc) + ' vs ' + int(r.vp) : '<br>Visits: ' + int(r.vc)));
       });
@@ -335,11 +358,11 @@ tr.hl td, td.hl, th.hl { background: var(--signal-soft); }
   function renderMonthly() {
     var host = document.getElementById('monthly-chart'); host.innerHTML = '';
     var months = D.months, rev = {}, vis = {};
-    D.sales.forEach(function (r) { if (inRegion(r[1])) rev[r[0]] = (rev[r[0]] || 0) + r[5]; });
-    D.visits.forEach(function (r) { if (inRegion(r[1])) vis[r[0]] = (vis[r[0]] || 0) + r[3]; });
+    D.sales.forEach(function (r) { if (inRegion(r[1]) && inRep(r[2]) && inCat(r[3])) rev[r[0]] = (rev[r[0]] || 0) + r[5]; });
+    D.visits.forEach(function (r) { if (inRegion(r[1]) && inRep(r[2])) vis[r[0]] = (vis[r[0]] || 0) + r[3]; });
     var R = months.map(function (k) { return rev[k] || 0; }), V = months.map(function (k) { return vis[k] || 0; });
-    document.getElementById('monthly-title').textContent = 'Revenue and visits by month, ' + (state.region || 'all regions');
-    document.getElementById('monthly-sub').textContent = 'Net revenue per month (line) and rep visits per month (bars), Jan 2024–Sep 2026.' + (!state.region || state.region === 'Sul' ? ' The dashed line marks 1 Jan 2026, when REP12 (Sul) left.' : '');
+    document.getElementById('monthly-title').textContent = 'Revenue and visits by month, ' + (state.rep || state.region || 'all regions') + (state.cat ? ', ' + state.cat : '');
+    document.getElementById('monthly-sub').textContent = 'Net revenue per month (line) and rep visits per month (bars), Jan 2024–Sep 2026.' + (state.cat ? ' Visits are not split by category, so the bars count all visits.' : '') + ((!state.region || state.region === 'Sul') && !state.rep ? ' The dashed line marks 1 Jan 2026, when REP12 (Sul) left.' : '');
     var W = 480, H = 300, m = { l: 48, r: 12, t: 12, b: 26 }, split = 170, gap = 30;
     var svg = el('svg', { viewBox: '0 0 ' + W + ' ' + H, role: 'img', 'aria-label': 'Monthly revenue and visits' }, host);
     var bw = (W - m.l - m.r) / months.length, X = function (i) { return m.l + (i + 0.5) * bw; };
@@ -355,7 +378,7 @@ tr.hl td, td.hl, th.hl { background: var(--signal-soft); }
     var d = R.map(function (v, i) { return (i ? 'L' : 'M') + X(i).toFixed(1) + ' ' + YR(v).toFixed(1); }).join('');
     el('path', { d: d, fill: 'none', stroke: css('--s1'), 'stroke-width': 2.5, 'stroke-linejoin': 'round' }, svg);
     months.forEach(function (k, i) { if (k.slice(5) === '01') txt(svg, X(i), H - 8, k.slice(0, 4), { 'text-anchor': 'middle' }); });
-    if (!state.region || state.region === 'Sul') {
+    if ((!state.region || state.region === 'Sul') && !state.rep) {
       var j = months.indexOf('2026-01'), xl = m.l + j * bw;
       el('line', { x1: xl, x2: xl, y1: m.t, y2: vBot, stroke: css('--ink'), 'stroke-width': 1, 'stroke-dasharray': '3 3' }, svg);
       txt(svg, xl - 4, m.t + 10, 'REP12 leaves', { 'text-anchor': 'end', class: 'lbl' });
@@ -377,7 +400,7 @@ tr.hl td, td.hl, th.hl { background: var(--signal-soft); }
 
   function repStats() {
     return D.meta.reps.map(function (rep) {
-      var s = sales('cur', function (r) { return r[2] === rep[0]; }), b = buyers('cur', '', rep[0]);
+      var s = sales('cur', function (r) { return r[2] === rep[0] && inCat(r[3]); }), b = state.cat ? null : buyers('cur', '', rep[0]);
       return { id: rep[0], name: rep[1], region: rep[2], left: rep[3], g: s.g, n: s.n, k: s.k, disc: s.g ? 1 - s.n / s.g : null, margin: s.n ? (s.n - s.k) / s.n : null, rpc: b ? s.n / b : null, buyers: b };
     }).filter(function (r) { return r.n > 0; });
   }
@@ -398,13 +421,14 @@ tr.hl td, td.hl, th.hl { background: var(--signal-soft); }
     var maxN = Math.max.apply(null, reps.map(function (r) { return r.n; }));
     var tip = tipFor(host);
     reps.slice().sort(function (p, q) { return q.n - p.n; }).forEach(function (r) {
-      var on = inRegion(r.region), out = r.disc > 0.1;
+      var on = inRegion(r.region) && inRep(r.id), out = r.disc > 0.1;
       var c = el('circle', { cx: X(r.disc), cy: Y(r.margin), r: 5 + 11 * Math.sqrt(r.n / maxN), fill: css(out ? '--pt' : '--s1'), 'fill-opacity': on ? 0.75 : 0.18, stroke: css('--sheet'), 'stroke-width': 1.5 }, svg);
-      if (out || (state.region && on)) txt(svg, X(r.disc) + (out ? -16 : 14), Y(r.margin) + 4, r.id, { class: 'lbl', 'text-anchor': out ? 'end' : 'start' });
+      if (out || ((state.region || state.rep) && on)) txt(svg, X(r.disc) + (out ? -16 : 14), Y(r.margin) + 4, r.id, { class: 'lbl', 'text-anchor': out ? 'end' : 'start' });
       c.addEventListener('pointerenter', function () { placeTip(tip, svg, W, H, X(r.disc), Y(r.margin) - 8, esc(r.name) + ' (' + r.id + ') · ' + esc(shortRegion(r.region)) + '<br>Discount ' + pct(r.disc) + ' · margin ' + pct(r.margin) + '<br>Net revenue ' + eur(r.n)); });
       c.addEventListener('pointerleave', function () { tip.hidden = true; });
+      clickable(c, function () { pickRep(r.id); }, 'Filter by ' + r.id);
     });
-    document.getElementById('scatter-sub').textContent = 'Each circle is a rep, sized by net revenue, ' + PERIOD_LABEL[state.period][0] + '.' + (state.region ? ' Reps outside ' + state.region + ' are faded.' : '');
+    document.getElementById('scatter-sub').textContent = 'Each circle is a rep, sized by net revenue, ' + PERIOD_LABEL[state.period][0] + (state.cat ? ', ' + state.cat + ' only' : '') + '.' + (state.rep ? ' Other reps are faded.' : state.region ? ' Reps outside ' + state.region + ' are faded.' : '');
   }
 
   function renderReps(reps) {
@@ -416,16 +440,17 @@ tr.hl td, td.hl, th.hl { background: var(--signal-soft); }
     document.getElementById('reps-sub').textContent = top.id + ' discounts ' + pct(top.disc) + ' against ' + pct(peerDisc) + ' for the other reps; margin ' + pct(top.margin) + ' against ' + pct((on - ok) / on) + '. Extra discount at ' + top.id + "'s list-price sales: " + eur(extra) + ', ' + PERIOD_LABEL[state.period][0] + '.';
     var head = '<thead><tr><th>Rep</th><th class="l">Region</th><th>Net revenue</th><th>Discount</th><th>Margin</th><th>Per customer</th></tr></thead>';
     var body = shown.map(function (r) {
-      return '<tr' + (r.id === top.id ? ' class="hl"' : '') + '><td>' + r.id + (r.left ? ' <span class="note">left ' + r.left.slice(0, 7) + '</span>' : '') + '</td><td class="l">' + esc(shortRegion(r.region)) + '</td><td>' + eur(r.n) + '</td><td>' + pct(r.disc) + '</td><td>' + pct(r.margin) + '</td><td>' + (r.rpc == null ? '–' : eur(r.rpc)) + '</td></tr>';
+      return '<tr class="hit-x' + (r.id === top.id ? ' hl' : '') + (r.id === state.rep ? ' on' : '') + '" tabindex="0" data-rep="' + r.id + '"><td>' + r.id + (r.left ? ' <span class="note">left ' + r.left.slice(0, 7) + '</span>' : '') + '</td><td class="l">' + esc(shortRegion(r.region)) + '</td><td>' + eur(r.n) + '</td><td>' + pct(r.disc) + '</td><td>' + pct(r.margin) + '</td><td>' + (r.rpc == null ? '–' : eur(r.rpc)) + '</td></tr>';
     }).join('');
     document.getElementById('reps-table').innerHTML = head + '<tbody>' + body + '</tbody>';
+    rowClicks('reps-table', function (tr) { pickRep(tr.dataset.rep); });
   }
 
   // Q3: call list and recency histogram (snapshot).
   function renderCalls() {
-    var rows = D.call.filter(function (c) { return inRegion(c[4]); });
+    var rows = D.call.filter(function (c) { return inRegion(c[4]) && inRep(c[6]) && inSeg(c[3]) && inBand(c[8]); });
     var tot = rows.reduce(function (s, c) { return s + c[11]; }, 0);
-    document.getElementById('call-sub').textContent = rows.length + ' customers in ' + (state.region || 'all regions') + ' with no visit for more than 60 days on 30 Sep 2026; together they bought ' + eur(tot) + ' in the last 12 months. Top 12 by that revenue; Days = days since the last visit.';
+    document.getElementById('call-sub').textContent = rows.length + ' customers in ' + selLabel() + ' with no visit for more than 60 days on 30 Sep 2026; together they bought ' + eur(tot) + ' in the last 12 months. Top 12 by that revenue; Days = days since the last visit.';
     var head = '<thead><tr><th>Customer</th>' + (state.region ? '' : '<th class="l">Region</th>') + '<th class="l">Rep</th><th>Days</th><th>12 m</th></tr></thead>';
     var body = rows.slice(0, 12).map(function (c) {
       return '<tr><td>' + esc(c[2]) + '<br><span class="note">' + esc(c[3]) + '</span></td>' + (state.region ? '' : '<td class="l">' + esc(shortRegion(c[4])) + '</td>') + '<td class="l">' + c[6] + '</td><td>' + c[8] + '</td><td>' + eur(c[11]) + '</td></tr>';
@@ -437,7 +462,7 @@ tr.hl td, td.hl, th.hl { background: var(--signal-soft); }
     var host = document.getElementById('recency-chart'); host.innerHTML = '';
     var bands = [0, 30, 60, 90, 120, 150, 180], cnt = bands.map(function () { return 0; }), n = 0;
     D.recency.forEach(function (r) { if (!inRegion(r[0])) return; var i = bands.indexOf(r[1]); if (i >= 0) { cnt[i] += r[2]; n += r[2]; } });
-    document.getElementById('recency-sub').textContent = 'Customers by days since their last visit on 30 Sep 2026, ' + (state.region || 'all regions') + ' (' + int(n) + ' customers). Orange bars are past the 60-day line.';
+    document.getElementById('recency-sub').textContent = 'Customers by days since their last visit on 30 Sep 2026, ' + (state.region || 'all regions') + ' (' + int(n) + ' customers). Orange bars are past the 60-day line; click one to list those customers.';
     var W = 480, H = 240, m = { l: 40, r: 8, t: 18, b: 26 };
     var svg = el('svg', { viewBox: '0 0 ' + W + ' ' + H, role: 'img', 'aria-label': 'Customers by days since last visit' }, host);
     var maxV = Math.max.apply(null, cnt) || 1, step = niceStep(maxV), top = Math.ceil(maxV / step) * step;
@@ -446,10 +471,11 @@ tr.hl td, td.hl, th.hl { background: var(--signal-soft); }
     var tip = tipFor(host);
     bands.forEach(function (b, i) {
       var x = m.l + i * bw, label = b === 180 ? '180+' : b + '–' + (b + 29);
-      el('rect', { x: x + bw * 0.12, y: Y(cnt[i]), width: bw * 0.76, height: Y(0) - Y(cnt[i]), rx: 3, fill: css(b >= 60 ? '--s2' : '--s1') }, svg);
+      el('rect', { x: x + bw * 0.12, y: Y(cnt[i]), width: bw * 0.76, height: Y(0) - Y(cnt[i]), rx: 3, fill: css(b >= 60 ? '--s2' : '--s1'), opacity: state.band >= 0 && state.band !== b ? 0.35 : 1 }, svg);
       txt(svg, x + bw / 2, H - 8, label, { 'text-anchor': 'middle' });
       txt(svg, x + bw / 2, Y(cnt[i]) - 6, int(cnt[i]), { 'text-anchor': 'middle', class: 'lbl' });
       var hit = el('rect', { x: x, y: m.t, width: bw, height: H - m.t - m.b, fill: 'transparent' }, svg);
+      if (b >= 60) clickable(hit, function () { pickBand(b); }, 'Show ' + label + ' days in the call list');
       hit.addEventListener('pointerenter', function () { placeTip(tip, svg, W, H, x + bw / 2, Y(cnt[i]), label + ' days since last visit<br>' + int(cnt[i]) + ' customers (' + pct(cnt[i] / n, 0) + ')'); });
       hit.addEventListener('pointerleave', function () { tip.hidden = true; });
     });
@@ -471,9 +497,10 @@ tr.hl td, td.hl, th.hl { background: var(--signal-soft); }
     rows.forEach(function (r, i) {
       var y = m.t + i * rowH, x = m.l;
       txt(svg, 8, y + rowH / 2 + 4, r.seg, { class: 'lbl' });
-      r.b.forEach(function (v, k) { if (v <= 0) return; el('rect', { x: x, y: y + 9, width: Math.max(1, X(v)), height: rowH - 18, fill: css(BUCKET_COLOR[k]) }, svg); x += X(v); });
+      r.b.forEach(function (v, k) { if (v <= 0) return; el('rect', { x: x, y: y + 9, width: Math.max(1, X(v)), height: rowH - 18, fill: css(BUCKET_COLOR[k]), opacity: state.seg && state.seg !== r.seg ? 0.3 : 1 }, svg); x += X(v); });
       txt(svg, x + 6, y + rowH / 2 + 4, eur(r.t), { class: 'lbl' });
       var hit = el('rect', { x: 0, y: y, width: W, height: rowH, fill: 'transparent' }, svg);
+      clickable(hit, function () { pickSeg(r.seg); }, 'Filter by ' + r.seg);
       hit.addEventListener('pointerenter', function () { placeTip(tip, svg, W, H, m.l + X(r.t) / 2, y + 6, esc(r.seg) + BUCKETS.map(function (b, k) { return '<br>' + b + ': ' + eur(r.b[k]); }).join('')); });
       hit.addEventListener('pointerleave', function () { tip.hidden = true; });
     });
@@ -485,20 +512,22 @@ tr.hl td, td.hl, th.hl { background: var(--signal-soft); }
     D.pay.forEach(function (r) { if (!inRegion(r[0])) return; var s = segs[r[1]] = segs[r[1]] || { seg: r[1], billed: 0, open: 0, od: 0, late: 0, paid: 0 }; s.billed += r[2]; s.open += r[3]; s.od += r[4]; s.late += r[5]; s.paid += r[6]; T.billed += r[2]; T.od += r[4]; });
     var rows = Object.keys(segs).map(function (k) { return segs[k]; }).sort(function (a, b) { return b.od - a.od; });
     var head = '<thead><tr><th>Segment</th><th>Billing</th><th>Open</th><th>90+ days</th><th>Share of 90+</th><th>Days late</th></tr></thead>';
-    var body = rows.map(function (s, i) { return '<tr' + (i === 0 ? ' class="hl"' : '') + '><td>' + esc(s.seg) + '</td><td>' + pct(s.billed / T.billed, 0) + '</td><td>' + eur(s.open) + '</td><td>' + eur(s.od) + '</td><td>' + (T.od ? pct(s.od / T.od, 0) : '–') + '</td><td>' + (s.paid ? (s.late / s.paid).toFixed(1) : '–') + '</td></tr>'; }).join('');
+    var body = rows.map(function (s, i) { return '<tr class="hit-x' + (i === 0 ? ' hl' : '') + (s.seg === state.seg ? ' on' : '') + '" tabindex="0" data-seg="' + esc(s.seg) + '"><td>' + esc(s.seg) + '</td><td>' + pct(s.billed / T.billed, 0) + '</td><td>' + eur(s.open) + '</td><td>' + eur(s.od) + '</td><td>' + (T.od ? pct(s.od / T.od, 0) : '–') + '</td><td>' + (s.paid ? (s.late / s.paid).toFixed(1) : '–') + '</td></tr>'; }).join('');
     document.getElementById('pay-table').innerHTML = head + '<tbody>' + body + '</tbody>';
+    rowClicks('pay-table', function (tr) { pickSeg(tr.dataset.seg); });
   }
 
   // Q5: seasonal index (1.0 = the category's average month), complete years 2024 and 2025.
   function seasonData() {
     var acc = {};
-    D.sales.forEach(function (r) { var y = r[0].slice(0, 4); if ((y !== '2024' && y !== '2025') || !inRegion(r[1])) return; var a = acc[r[3]] = acc[r[3]] || MONTHS.map(function () { return 0; }); a[Number(r[0].slice(5, 7)) - 1] += r[5] / 2; });
+    D.sales.forEach(function (r) { var y = r[0].slice(0, 4); if ((y !== '2024' && y !== '2025') || !inRegion(r[1]) || !inRep(r[2])) return; var a = acc[r[3]] = acc[r[3]] || MONTHS.map(function () { return 0; }); a[Number(r[0].slice(5, 7)) - 1] += r[5] / 2; });
     return Object.keys(acc).map(function (c) { var a = acc[c], mean = a.reduce(function (s, v) { return s + v; }, 0) / 12; return { cat: c, avg: a, idx: a.map(function (v) { return v / mean; }) }; });
   }
   function renderSeason() {
     var host = document.getElementById('season-chart'); host.innerHTML = '';
     var cats = seasonData();
-    document.getElementById('season-sub').textContent = 'Average monthly net revenue ÷ the category\'s average month, 2024 and 2025, ' + (state.region || 'all regions') + '. 1.0 = an average month.';
+    document.getElementById('season-legend').innerHTML = state.cat ? '<span><i style="background:var(' + (state.cat === 'Parasiticides' ? '--s2' : '--s1') + ')"></i>' + esc(state.cat) + '</span><span><i style="background:var(--muted)"></i>Other categories</span>' : '<span><i style="background:var(--s1)"></i>Vaccines</span><span><i style="background:var(--s2)"></i>Parasiticides</span><span><i style="background:var(--muted)"></i>Other categories</span>';
+    document.getElementById('season-sub').textContent = 'Average monthly net revenue ÷ the category\'s average month, 2024 and 2025, ' + selLabel(true) + '. 1.0 = an average month.' + (state.cat ? '' : ' Click a line to filter by category.');
     var W = 480, H = 260, m = { l: 36, r: 16, t: 12, b: 26 };
     var svg = el('svg', { viewBox: '0 0 ' + W + ' ' + H, role: 'img', 'aria-label': 'Seasonal index by category and month' }, host);
     var all = []; cats.forEach(function (c) { all = all.concat(c.idx); });
@@ -507,12 +536,13 @@ tr.hl td, td.hl, th.hl { background: var(--signal-soft); }
     var X = function (i) { return m.l + i / 11 * (W - m.l - m.r); }, Y = function (v) { return H - m.b - (v - minV) / (maxV - minV) * (H - m.t - m.b); };
     for (var v = minV; v <= maxV + 1e-9; v += step) { var one = Math.abs(v - 1) < 1e-9; el('line', { x1: m.l, x2: W - m.r, y1: Y(v), y2: Y(v), stroke: css(one ? '--muted' : '--grid'), 'stroke-width': 1, 'stroke-dasharray': one ? '2 3' : 'none' }, svg); if (Math.abs(v * 2 - Math.round(v * 2)) < 1e-9) txt(svg, m.l - 8, Y(v) + 4, v.toFixed(1), { 'text-anchor': 'end' }); }
     MONTHS.forEach(function (mo, i) { txt(svg, X(i), H - 8, mo, { 'text-anchor': 'middle' }); });
-    var color = function (c) { return c === 'Vaccines' ? '--s1' : c === 'Parasiticides' ? '--s2' : '--muted'; };
+    var color = function (c) { if (state.cat) return c === state.cat ? (c === 'Parasiticides' ? '--s2' : '--s1') : '--muted'; return c === 'Vaccines' ? '--s1' : c === 'Parasiticides' ? '--s2' : '--muted'; };
     cats.sort(function (a, b) { return (color(a.cat) === '--muted' ? 0 : 1) - (color(b.cat) === '--muted' ? 0 : 1); }).forEach(function (c) {
       var hl = color(c.cat) !== '--muted';
       el('path', { d: c.idx.map(function (v, i) { return (i ? 'L' : 'M') + X(i).toFixed(1) + ' ' + Y(v).toFixed(1); }).join(''), fill: 'none', stroke: css(color(c.cat)), 'stroke-width': hl ? 2.5 : 1.25, 'stroke-opacity': hl ? 1 : 0.6, 'stroke-linejoin': 'round' }, svg);
     });
     var cross = el('line', { y1: m.t, y2: H - m.b, stroke: css('--muted'), 'stroke-width': 1, 'stroke-dasharray': '3 3', visibility: 'hidden' }, svg);
+    var linePath = function (c) { return c.idx.map(function (v, i) { return (i ? 'L' : 'M') + X(i).toFixed(1) + ' ' + Y(v).toFixed(1); }).join(''); };
     var hit = el('rect', { x: m.l - 10, y: m.t, width: W - m.l - m.r + 20, height: H - m.t - m.b, fill: 'transparent' }, svg);
     var tip = tipFor(host);
     hit.addEventListener('pointermove', function (evt) {
@@ -522,17 +552,51 @@ tr.hl td, td.hl, th.hl { background: var(--signal-soft); }
       placeTip(tip, svg, W, H, X(i), Y(top), MONTHS[i] + cats.slice().sort(function (p, q) { return q.idx[i] - p.idx[i]; }).map(function (c) { return '<br>' + esc(c.cat) + ': ' + c.idx[i].toFixed(2); }).join(''));
     });
     hit.addEventListener('pointerleave', function () { cross.setAttribute('visibility', 'hidden'); tip.hidden = true; });
+    // wide transparent strokes over each line, above the hover rect, so a line can be clicked
+    cats.forEach(function (c) { var lp = el('path', { d: linePath(c), fill: 'none', stroke: 'transparent', 'stroke-width': 12, 'pointer-events': 'stroke' }, svg); clickable(lp, function () { pickCat(c.cat); }, 'Filter by ' + c.cat); lp.addEventListener('pointermove', function (evt) { hit.dispatchEvent(new PointerEvent('pointermove', { clientX: evt.clientX, clientY: evt.clientY })); }); });
     var avg = function (a, ms) { return ms.reduce(function (s, k) { return s + a[k]; }, 0) / ms.length; };
     var rows = cats.map(function (c) { var w = avg(c.avg, [11, 0, 1]); return { cat: c.cat, sp: avg(c.avg, [2, 3, 4]) / w, su: avg(c.avg, [5, 6, 7]) / w }; }).sort(function (a, b) { return Math.max(b.sp, b.su) - Math.max(a.sp, a.su); });
     document.getElementById('season-table').innerHTML = '<thead><tr><th>Category</th><th>Spring (Mar–May)</th><th>Summer (Jun–Aug)</th></tr></thead><tbody>' + rows.map(function (r) {
-      return '<tr><td>' + esc(r.cat) + '</td><td' + (r.sp > 1.5 ? ' class="hl"' : '') + '>' + r.sp.toFixed(1) + '×</td><td' + (r.su > 1.5 ? ' class="hl"' : '') + '>' + r.su.toFixed(1) + '×</td></tr>';
+      return '<tr class="hit-x' + (r.cat === state.cat ? ' on' : '') + '" tabindex="0" data-cat="' + esc(r.cat) + '"><td>' + esc(r.cat) + '</td><td' + (r.sp > 1.5 ? ' class="hl"' : '') + '>' + r.sp.toFixed(1) + '×</td><td' + (r.su > 1.5 ? ' class="hl"' : '') + '>' + r.su.toFixed(1) + '×</td></tr>';
     }).join('') + '</tbody>';
+    rowClicks('season-table', function (tr) { pickCat(tr.dataset.cat); });
   }
 
   function render() {
-    document.getElementById('reset').hidden = state.region === DEF.region && state.period === DEF.period;
+    document.getElementById('reset').hidden = Object.keys(DEF).every(function (k) { return state[k] === DEF[k]; });
     var reps = repStats();
-    renderKpis(); renderRegions(); renderMonthly(); renderScatter(reps); renderReps(reps); renderCalls(); renderRecency(); renderAging(); renderPay(); renderSeason();
+    renderKpis(); renderRegions(); renderMonthly(); renderScatter(reps); renderReps(reps); renderCalls(); renderRecency(); renderAging(); renderPay(); renderSeason(); renderSelection();
+  }
+  function rowClicks(id, fn) {
+    document.querySelectorAll('#' + id + ' tr.hit-x').forEach(function (tr) {
+      tr.addEventListener('click', function () { fn(tr); });
+      tr.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fn(tr); } });
+    });
+  }
+  function selLabel(noSeg) {
+    var a = [state.rep || state.region || 'all regions'];
+    if (state.rep && state.region) a[0] = state.rep + ' (' + state.region + ')';
+    if (!noSeg && state.seg) a.push(state.seg.toLowerCase() + 's');
+    return a.join(', ');
+  }
+  function repRegion(id) { var r = D.meta.reps.find(function (x) { return x[0] === id; }); return r ? r[2] : ''; }
+  function pickRegion(reg) { state.region = state.region === reg ? '' : reg; if (state.rep && state.region && repRegion(state.rep) !== state.region) state.rep = ''; syncControls(); render(); }
+  function pickRep(id) { state.rep = state.rep === id ? '' : id; if (state.rep && state.region && repRegion(id) !== state.region) state.region = ''; syncControls(); render(); }
+  function pickCat(c) { state.cat = state.cat === c ? '' : c; render(); }
+  function pickSeg(s) { state.seg = state.seg === s ? '' : s; render(); }
+  function pickBand(b) { state.band = state.band === b ? -1 : b; render(); }
+  // Chips for every click filter; each chip clears its own filter
+  function renderSelection() {
+    var bar = document.getElementById('xf'), chips = [];
+    if (state.region) chips.push(['region', 'Region: ' + state.region, '']);
+    if (state.rep) chips.push(['rep', 'Rep: ' + state.rep, 'revenue by month, the call list and the seasonal index']);
+    if (state.cat) chips.push(['cat', 'Category: ' + state.cat, 'revenue by month and the rep figures']);
+    if (state.seg) chips.push(['seg', 'Segment: ' + state.seg, 'the call list and the payment table']);
+    if (state.band >= 0) chips.push(['band', 'Days since visit: ' + (state.band === 180 ? '180+' : state.band + '–' + (state.band + 29)), 'the call list']);
+    if (!chips.length) { bar.innerHTML = '<span>Click a bar, circle, line or table row to filter the other charts.</span>'; return; }
+    bar.innerHTML = '<span>Filtered by</span>' + chips.map(function (c) { return '<button type="button" data-k="' + c[0] + '" title="Clear this filter">' + esc(c[1]) + ' ×</button>'; }).join('') +
+      '<span>' + chips.filter(function (c) { return c[2]; }).map(function (c) { return c[1].split(':')[0] + ' filters ' + c[2]; }).join('; ') + (chips.some(function (c) { return c[0] !== 'region'; }) ? '. The headline numbers follow region and period only.' : '') + '</span>';
+    bar.querySelectorAll('button').forEach(function (b) { b.addEventListener('click', function () { var k = b.dataset.k; state[k] = DEF[k]; syncControls(); render(); }); });
   }
   function syncControls() {
     document.getElementById('region-sel').value = state.region;
@@ -542,7 +606,7 @@ tr.hl td, td.hl, th.hl { background: var(--signal-soft); }
     var b = e.target.closest('button'); if (!b) return;
     state.period = b.dataset.period; syncControls(); render();
   });
-  document.getElementById('region-sel').addEventListener('change', function () { state.region = this.value; render(); });
+  document.getElementById('region-sel').addEventListener('change', function () { state.region = this.value; if (state.rep && state.region && repRegion(state.rep) !== state.region) state.rep = ''; render(); });
   document.getElementById('reset').addEventListener('click', function () { state = Object.assign({}, DEF); syncControls(); render(); });
   if (window.matchMedia) window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function () { if (D.meta) render(); });
   new MutationObserver(function () { if (D.meta) render(); }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
