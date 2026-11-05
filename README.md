@@ -6,7 +6,8 @@ years in sales leadership at a distributor in Brazil, rebuilt on synthetic data 
 The same data model is built four ways: Qlik Sense, dbt on DuckDB, Power BI and a static web page.
 
 **Stack:** Python (data generator) · Qlik Sense load script, set analysis, master items · dbt + DuckDB
-(SQL star schema, 23 models, 64 tests) · Power BI (PBIP, TMDL semantic model, DAX) · HTML/SVG web dashboard.
+(SQL star schema, 23 models, 64 tests) · Power BI (PBIP, TMDL semantic model, DAX) · HTML/SVG web dashboard with click-to-filter ·
+Python notebook (pandas, Altair).
 
 ## The questions it answers
 
@@ -101,6 +102,14 @@ into the data load editor (each `///$tab` is a section) and reload. On Qlik Sens
 a folder connection. Then create the master items in [`qlik/master_items.md`](qlik/master_items.md) and the
 sheets in [`qlik/sheets.md`](qlik/sheets.md).
 
+## Python notebook
+
+[`notebooks/how_it_was_built.ipynb`](notebooks/how_it_was_built.ipynb) walks through the project in the order it was
+built: generate the data, load and check it in pandas, model it in dbt, answer the five questions with interactive
+Altair charts (click a region, rep or category to filter the linked chart), and reconcile every answer with the dbt
+marts. GitHub shows it without JavaScript; the
+[interactive version](https://guilhermerigonato.com/commercial-analytics/notebook/) runs the charts.
+
 ## Qlik data model
 
 One concatenated fact table (`FactType` = Sale, Visit or Invoice) keyed on CustomerID, RepID, SKU and %Date,
@@ -127,4 +136,5 @@ tests/generic/            unique_combination test
 scripts/export.py         Parquet for Power BI, JSON for the web page
 powerbi/                  PBIP: TMDL semantic model, report scaffold, Parquet data, TMDL-view fallback script
 web/index.html            static dashboard; data in web/data/
+notebooks/                step-by-step Python notebook (pandas, Altair), reconciled with the dbt marts
 ```
