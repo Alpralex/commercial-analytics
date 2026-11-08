@@ -44,10 +44,10 @@ table Metric
 		mode: import
 		source =
 				{
-					("Net revenue", NAMEOF ( 'fct_sales'[Net Revenue] ), 0),
-					("Gross margin %", NAMEOF ( 'fct_sales'[Gross Margin %] ), 1),
-					("Buying customers", NAMEOF ( 'fct_sales'[Buying Customers] ), 2),
-					("Visits", NAMEOF ( 'fct_visits'[Visits] ), 3)
+					("Net revenue", NAMEOF ( [Net Revenue] ), 0),
+					("Gross margin %", NAMEOF ( [Gross Margin %] ), 1),
+					("Buying customers", NAMEOF ( [Buying Customers] ), 2),
+					("Visits", NAMEOF ( [Visits] ), 3)
 				}
 
 	annotation PBI_Id = 667c29014f86532694a2f151547d2092
