@@ -89,6 +89,127 @@ table fct_sales
 		formatString: #,0 €
 		lineageTag: 554c5ed3-b8ac-4b09-a893-9913c9a2e0d4
 
+	/// One-sentence answer for the Overview page: total change on last year and the weakest region. Changes with the slicers.
+	measure 'Headline Overview' =
+			VAR Total = [Revenue YTD vs PY %]
+			VAR ByRegion =
+				FILTER (
+					ADDCOLUMNS ( VALUES ( dim_customer[region] ), "@chg", [Revenue YTD vs PY %] ),
+					NOT ISBLANK ( [@chg] )
+				)
+			VAR Worst = TOPN ( 1, ByRegion, [@chg], ASC )
+			VAR WorstRegion = MAXX ( Worst, dim_customer[region] )
+			VAR WorstChg = MAXX ( Worst, [@chg] )
+			RETURN
+				IF (
+					ISBLANK ( Total ),
+					"No sales in this selection.",
+					"Revenue is " & FORMAT ( Total, "+0.0%;-0.0%" ) & " on the same months of last year"
+						& IF (
+							COUNTROWS ( ByRegion ) > 1,
+							". Weakest region: " & WorstRegion & " at " & FORMAT ( WorstChg, "+0.0%;-0.0%" ) & ".",
+							"."
+						)
+				)
+		displayFolder: Story
+		lineageTag: 0f4aa438-37d0-5729-9159-d147aed627aa
+
+	/// One-sentence answer for the Coverage page: visits and revenue against last year, and customers left without a visit.
+	measure 'Headline Coverage' =
+			VAR Rev = [Revenue YTD vs PY %]
+			VAR Vis = [Visits YTD vs PY %]
+			VAR NoVisit = [Customers Without Visit 60+]
+			RETURN
+				IF (
+					ISBLANK ( Rev ),
+					"No sales in this selection.",
+					"Visits " & FORMAT ( Vis, "+0.0%;-0.0%" ) & " and revenue " & FORMAT ( Rev, "+0.0%;-0.0%" )
+						& " on last year. " & FORMAT ( NoVisit, "#,0" ) & " customers have had no visit for 60+ days."
+				)
+		displayFolder: Story
+		lineageTag: 8b28b885-3216-5d1d-9017-25c55063ddf1
+
+	/// One-sentence answer for the Pricing page: the rep with the highest discount against everyone else.
+	measure 'Headline Pricing' =
+			VAR ByRep =
+				FILTER (
+					ADDCOLUMNS ( VALUES ( dim_rep[rep_name] ), "@disc", [Discount %], "@gm", [Gross Margin %] ),
+					NOT ISBLANK ( [@disc] )
+				)
+			VAR Top1 = TOPN ( 1, ByRep, [@disc], DESC )
+			VAR TopRep = MAXX ( Top1, dim_rep[rep_name] )
+			VAR TopDisc = MAXX ( Top1, [@disc] )
+			VAR TopGm = MAXX ( Top1, [@gm] )
+			VAR Others = CALCULATE ( [Discount %], KEEPFILTERS ( dim_rep[rep_name] <> TopRep ) )
+			RETURN
+				IF (
+					COUNTROWS ( ByRep ) < 2,
+					"Discount " & FORMAT ( [Discount %], "0.0%" ) & ", gross margin " & FORMAT ( [Gross Margin %], "0.0%" ) & ".",
+					TopRep & " gives " & FORMAT ( TopDisc, "0.0%" ) & " discount against " & FORMAT ( Others, "0.0%" )
+						& " for the other reps, and keeps " & FORMAT ( TopGm, "0.0%" ) & " gross margin."
+				)
+		displayFolder: Story
+		lineageTag: b2e3712f-8fd6-5a4b-84fc-0b9b59d41471
+
+	/// One-sentence answer for the Receivables page: what is overdue 90+ days and which segment holds it.
+	measure 'Headline Receivables' =
+			VAR BySeg =
+				FILTER (
+					ADDCOLUMNS ( VALUES ( dim_customer[segment] ), "@share", [Overdue 90+ Share], "@late", [Avg Days Late] ),
+					NOT ISBLANK ( [@share] )
+				)
+			VAR Top1 = TOPN ( 1, BySeg, [@share], DESC )
+			VAR Seg = MAXX ( Top1, dim_customer[segment] )
+			RETURN
+				IF (
+					ISBLANK ( [Overdue 90+] ),
+					"Nothing is overdue 90+ days in this selection.",
+					FORMAT ( [Overdue 90+], "#,0 €" ) & " is overdue 90+ days. The segment " & Seg & " holds "
+						& FORMAT ( MAXX ( Top1, [@share] ), "0.0%" ) & " of it and pays "
+						& FORMAT ( MAXX ( Top1, [@late] ), "0" ) & " days late on average."
+				)
+		displayFolder: Story
+		lineageTag: e4944138-cb8f-53de-a135-0db4895e62d3
+
+	/// Sentence at the top of the Customer detail drill-through page.
+	measure 'Customer Headline' =
+			VAR Name = SELECTEDVALUE ( dim_customer[customer_name] )
+			VAR DaysNoVisit = SELECTEDVALUE ( dim_customer[days_since_visit] )
+			RETURN
+				IF (
+					ISBLANK ( Name ),
+					"Right-click a customer on any page and choose Drill through > Customer detail.",
+					Name & ", " & SELECTEDVALUE ( dim_customer[segment] ) & " in " & SELECTEDVALUE ( dim_customer[region] ) & ". "
+						& IF ( ISBLANK ( DaysNoVisit ), "No visit on record", "Last visit " & DaysNoVisit & " days ago" )
+						& ", " & FORMAT ( [Revenue L12M], "#,0 €" ) & " bought in the last 12 months, "
+						& FORMAT ( [Overdue 90+], "#,0 €" ) & " overdue 90+ days."
+				)
+		displayFolder: Story
+		lineageTag: b7ebde86-5860-5743-95fe-d7a368d6df46
+
+	/// Title of the Overview monthly chart; follows the Metric field parameter.
+	measure 'Metric Chart Title' =
+			VAR Pick = SELECTEDVALUE ( Metric[Metric Order], 0 )
+			RETURN
+				SWITCH ( Pick, 1, "Gross margin %", 2, "Buying customers", 3, "Visits", "Net revenue" )
+					& " by month, one line per year"
+		displayFolder: Story
+		lineageTag: 98ec92bd-385e-5b9d-9d44-8a68a3c77017
+
+	/// Subtitle of the Overview monthly chart.
+	measure 'Metric Chart Subtitle' =
+			VAR Pick = SELECTEDVALUE ( Metric[Metric Order], 0 )
+			RETURN
+				SWITCH (
+					Pick,
+					1, "Net revenue minus cost, as a share of net revenue",
+					2, "Distinct customers with at least one order in the month",
+					3, "Sales rep visits in the month",
+					"€, excluding VAT"
+				) & ". 2026 runs to September. Change the measure with the Metric filter"
+		displayFolder: Story
+		lineageTag: e0ffbf27-2372-59e5-99ff-0924a15bd3a3
+
 	column date_day
 		dataType: dateTime
 		isHidden

@@ -19,6 +19,7 @@ ref table fct_sales
 ref table fct_visits
 ref table fct_invoices
 ref table 'Time view'
+ref table Metric
 ref table security_user_access
 
 ref role 'Sales director'
