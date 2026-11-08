@@ -111,6 +111,7 @@ table fct_sales
 							"."
 						)
 				)
+		isHidden
 		displayFolder: Story
 		lineageTag: 0f4aa438-37d0-5729-9159-d147aed627aa
 
@@ -126,6 +127,7 @@ table fct_sales
 					"Visits " & FORMAT ( Vis, "+0.0%;-0.0%" ) & " and revenue " & FORMAT ( Rev, "+0.0%;-0.0%" )
 						& " on last year. " & FORMAT ( NoVisit, "#,0" ) & " customers have had no visit for 60+ days."
 				)
+		isHidden
 		displayFolder: Story
 		lineageTag: 8b28b885-3216-5d1d-9017-25c55063ddf1
 
@@ -148,6 +150,7 @@ table fct_sales
 					TopRep & " gives " & FORMAT ( TopDisc, "0.0%" ) & " discount against " & FORMAT ( Others, "0.0%" )
 						& " for the other reps, and keeps " & FORMAT ( TopGm, "0.0%" ) & " gross margin."
 				)
+		isHidden
 		displayFolder: Story
 		lineageTag: b2e3712f-8fd6-5a4b-84fc-0b9b59d41471
 
@@ -168,6 +171,7 @@ table fct_sales
 						& FORMAT ( MAXX ( Top1, [@share] ), "0.0%" ) & " of it and pays "
 						& FORMAT ( MAXX ( Top1, [@late] ), "0" ) & " days late on average."
 				)
+		isHidden
 		displayFolder: Story
 		lineageTag: e4944138-cb8f-53de-a135-0db4895e62d3
 
@@ -184,6 +188,7 @@ table fct_sales
 						& ", " & FORMAT ( [Revenue L12M], "#,0 €" ) & " bought in the last 12 months, "
 						& FORMAT ( [Overdue 90+], "#,0 €" ) & " overdue 90+ days."
 				)
+		isHidden
 		displayFolder: Story
 		lineageTag: b7ebde86-5860-5743-95fe-d7a368d6df46
 
@@ -193,6 +198,7 @@ table fct_sales
 			RETURN
 				SWITCH ( Pick, 1, "Gross margin %", 2, "Buying customers", 3, "Visits", "Net revenue" )
 					& " by month, one line per year"
+		isHidden
 		displayFolder: Story
 		lineageTag: 98ec92bd-385e-5b9d-9d44-8a68a3c77017
 
@@ -207,6 +213,7 @@ table fct_sales
 					3, "Sales rep visits in the month",
 					"€, excluding VAT"
 				) & ". 2026 runs to September. Change the measure with the Metric filter"
+		isHidden
 		displayFolder: Story
 		lineageTag: e0ffbf27-2372-59e5-99ff-0924a15bd3a3
 
