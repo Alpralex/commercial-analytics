@@ -1,6 +1,7 @@
 table fct_sales
 	lineageTag: 68d04650-b01e-4066-9902-be475f4a197e
 
+	/// Sales after discounts and returns: the revenue every margin and growth measure starts from.
 	measure 'Net Revenue' = SUM ( fct_sales[net_amount] )
 		formatString: #,0 €
 		lineageTag: d16ec226-d089-47aa-8f2a-a5cf3daba3ea
@@ -10,22 +11,27 @@ table fct_sales
 		formatString: #,0 €
 		lineageTag: bc189d58-0ff8-4e88-b3c2-cbee7657f0d1
 
+	/// Cost of the goods sold in the period.
 	measure 'Cost of Sales' = SUM ( fct_sales[cost_amount] )
 		formatString: #,0 €
 		lineageTag: 00fbee5a-2aeb-4a80-b3c6-28aee7368c9e
 
+	/// Units invoiced in the period.
 	measure 'Units Sold' = SUM ( fct_sales[quantity] )
 		formatString: #,0
 		lineageTag: 39764b1a-e4c4-4aac-b8b5-f0a929ba2b59
 
+	/// Net revenue minus cost of sales.
 	measure 'Gross Margin' = [Net Revenue] - [Cost of Sales]
 		formatString: #,0 €
 		lineageTag: 06d888b8-1a78-4a01-a56e-d800344c491c
 
+	/// Gross margin as a share of net revenue.
 	measure 'Gross Margin %' = DIVIDE ( [Gross Margin], [Net Revenue] )
 		formatString: 0.0%
 		lineageTag: 5ba8062f-1187-4f70-b5d0-128e3e520a84
 
+	/// Gross sales minus net revenue: what discounts and returns cost in the period.
 	measure 'Discount Amount' = [Gross Sales] - [Net Revenue]
 		formatString: #,0 €
 		lineageTag: f79c8661-4a8e-48ca-8485-169f49eb962b
@@ -40,18 +46,22 @@ table fct_sales
 		formatString: #,0 €
 		lineageTag: b49a1f2d-041b-40be-9bf4-d8929440d5c1
 
+	/// Net revenue over the same year-to-date window of the previous year.
 	measure 'Revenue PYTD' = CALCULATE ( [Net Revenue], SAMEPERIODLASTYEAR ( DATESYTD ( dim_date[date_day] ) ) )
 		formatString: #,0 €
 		lineageTag: 160beb50-3e50-45ac-8a4c-69f2d6cc91c9
 
+	/// Year-to-date growth of net revenue against the previous year.
 	measure 'Revenue YTD vs PY %' = DIVIDE ( [Revenue YTD] - [Revenue PYTD], [Revenue PYTD] )
 		formatString: +0.0%;-0.0%;0.0%
 		lineageTag: df674c40-1d67-4d5e-bfb0-0fe573c41d1d
 
+	/// Net revenue in the same period of the previous year.
 	measure 'Revenue PY' = CALCULATE ( [Net Revenue], SAMEPERIODLASTYEAR ( dim_date[date_day] ) )
 		formatString: #,0 €
 		lineageTag: b59a24db-e902-43f1-a20e-6b9ca668ea6e
 
+	/// Net revenue growth against the same period of the previous year.
 	measure 'Revenue vs PY %' = DIVIDE ( [Net Revenue] - [Revenue PY], [Revenue PY] )
 		formatString: +0.0%;-0.0%;0.0%
 		lineageTag: ce869615-83fd-433a-93a6-c9e1cc2acf85
@@ -64,10 +74,12 @@ table fct_sales
 		formatString: #,0 €
 		lineageTag: 73413a4e-a0de-4d7d-a359-1d2c076a3933
 
+	/// Last-12-month revenue of customers with no visit in 60 days: revenue the coverage gap puts at risk.
 	measure 'Revenue L12M at Risk' = CALCULATE ( [Revenue L12M], dim_customer[visit_recency] = "No visit 60+ days" )
 		formatString: #,0 €
 		lineageTag: 5800b4d8-06c2-4306-bedb-f27cc51f112d
 
+	/// Distinct customers with at least one sale in the period.
 	measure 'Buying Customers' = DISTINCTCOUNT ( fct_sales[customer_id] )
 		formatString: #,0
 		lineageTag: af3cb211-d7b0-406a-a6fa-bd00bcfb363e
@@ -81,10 +93,12 @@ table fct_sales
 		formatString: 0.0%
 		lineageTag: dcd43a59-7d7e-45d1-8f57-1eb338426d56
 
+	/// Net revenue divided by the number of buying customers.
 	measure 'Revenue per Customer' = DIVIDE ( [Net Revenue], [Buying Customers] )
 		formatString: #,0 €
 		lineageTag: eecc6bb0-6efd-4ee9-bdd6-e1deeaaf389e
 
+	/// Net revenue divided by the number of sales visits in the period.
 	measure 'Revenue per Visit' = DIVIDE ( [Net Revenue], [Visits] )
 		formatString: #,0 €
 		lineageTag: 554c5ed3-b8ac-4b09-a893-9913c9a2e0d4

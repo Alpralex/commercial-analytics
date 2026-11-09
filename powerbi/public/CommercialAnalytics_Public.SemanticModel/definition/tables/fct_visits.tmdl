@@ -1,22 +1,27 @@
 table fct_visits
 	lineageTag: 4c7ecf01-b9b5-4a7d-a925-bebc2fea5d59
 
+	/// Sales visits logged in the period.
 	measure Visits = COUNTROWS ( fct_visits )
 		formatString: #,0
 		lineageTag: 4b69b1f3-471b-4c65-be43-c641bb4b3d73
 
+	/// Visits in the same period of the previous year.
 	measure 'Visits PY' = CALCULATE ( [Visits], SAMEPERIODLASTYEAR ( dim_date[date_day] ) )
 		formatString: #,0
 		lineageTag: b02e8d11-f003-40e5-992d-d3ad1ce0aff8
 
+	/// Visits from the start of the year to the last selected date.
 	measure 'Visits YTD' = CALCULATE ( [Visits], DATESYTD ( dim_date[date_day] ) )
 		formatString: #,0
 		lineageTag: 7d3d5b74-4eea-4c39-8894-548be10d2485
 
+	/// Visits over the same year-to-date window of the previous year.
 	measure 'Visits PYTD' = CALCULATE ( [Visits], SAMEPERIODLASTYEAR ( DATESYTD ( dim_date[date_day] ) ) )
 		formatString: #,0
 		lineageTag: 7cc3cf45-4d31-4db0-a4d6-6e9b50fa5be7
 
+	/// Year-to-date growth of visits against the previous year.
 	measure 'Visits YTD vs PY %' = DIVIDE ( [Visits YTD] - [Visits PYTD], [Visits PYTD] )
 		formatString: +0.0%;-0.0%;0.0%
 		lineageTag: 363fbe93-ac2c-42c1-9f4f-41c1c11c5b29

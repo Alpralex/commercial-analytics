@@ -6,6 +6,7 @@ table fct_invoices
 		formatString: #,0 €
 		lineageTag: 746ea2dd-22cb-42c7-8972-ff45516551b4
 
+	/// Customer's billed amount as a share of all customers' billing in the period.
 	measure 'Billing Share' = DIVIDE ( [Billed Amount], CALCULATE ( [Billed Amount], ALL ( dim_customer ) ) )
 		formatString: 0.0%
 		lineageTag: c4ed0e13-b777-478a-ba11-f7363f1fa6b8
@@ -15,6 +16,7 @@ table fct_invoices
 		formatString: #,0 €
 		lineageTag: efe3d5a9-e006-40a3-8dcd-46124ac9f50f
 
+	/// Open amount on invoices more than 90 days past due, as of today. Ignores the date filter.
 	measure 'Overdue 90+' = CALCULATE ( SUM ( fct_invoices[open_amount] ), fct_invoices[aging_bucket] = "90+", REMOVEFILTERS ( dim_date ) )
 		formatString: #,0 €
 		lineageTag: 4ebd3536-eecb-44a8-83f4-85455799efc2
@@ -30,6 +32,7 @@ table fct_invoices
 		lineageTag: de79f192-4078-4b35-b83d-55a18579d799
 
 	column invoice_id
+		isHidden
 		dataType: string
 		isKey
 		lineageTag: 0a496c20-02b4-409b-9ee8-8120d21b1be8

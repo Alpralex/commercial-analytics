@@ -11,6 +11,7 @@ table dim_date
 		sourceColumn: date_day
 
 	column year_number
+		isHidden
 		dataType: int64
 		formatString: 0
 		lineageTag: c6769e00-5fbf-44c0-83d9-987dc8db4a70
@@ -24,6 +25,7 @@ table dim_date
 		sourceColumn: quarter_label
 
 	column month_number
+		isHidden
 		dataType: int64
 		formatString: 0
 		lineageTag: da8edd85-1b90-44ab-b565-56050e01a330
@@ -51,6 +53,7 @@ table dim_date
 		sourceColumn: year_month
 
 	column weekday_number
+		isHidden
 		dataType: int64
 		formatString: 0
 		lineageTag: 07caff77-7020-411a-b020-de2706911e06
