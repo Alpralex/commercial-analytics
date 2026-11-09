@@ -177,13 +177,13 @@ table fct_sales
 
 	/// Sentence at the top of the Customer detail drill-through page.
 	measure 'Customer Headline' =
-			VAR Name = SELECTEDVALUE ( dim_customer[customer_name] )
+			VAR CustName = SELECTEDVALUE ( dim_customer[customer_name] )
 			VAR DaysNoVisit = SELECTEDVALUE ( dim_customer[days_since_visit] )
 			RETURN
 				IF (
-					ISBLANK ( Name ),
+					ISBLANK ( CustName ),
 					"Right-click a customer on any page and choose Drill through > Customer detail.",
-					Name & ", " & SELECTEDVALUE ( dim_customer[segment] ) & " in " & SELECTEDVALUE ( dim_customer[region] ) & ". "
+					CustName & ", " & SELECTEDVALUE ( dim_customer[segment] ) & " in " & SELECTEDVALUE ( dim_customer[region] ) & ". "
 						& IF ( ISBLANK ( DaysNoVisit ), "No visit on record", "Last visit " & DaysNoVisit & " days ago" )
 						& ", " & FORMAT ( [Revenue L12M], "#,0 €" ) & " bought in the last 12 months, "
 						& FORMAT ( [Overdue 90+], "#,0 €" ) & " overdue 90+ days."
