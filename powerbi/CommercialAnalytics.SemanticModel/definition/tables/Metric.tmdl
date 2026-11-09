@@ -1,0 +1,53 @@
+table Metric
+	lineageTag: bc65efce-f55a-5492-8b6f-265c19e4ea8d
+
+	/// Field parameter: the measure shown on the Overview monthly chart.
+	column Metric
+		dataType: string
+		lineageTag: 06d8d6f3-e38a-56a7-9011-4c0d36d60e7b
+		summarizeBy: none
+		sourceColumn: [Value1]
+		sortByColumn: 'Metric Order'
+
+		relatedColumnDetails
+			groupByColumn: 'Metric Fields'
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Metric Fields'
+		dataType: string
+		isHidden
+		lineageTag: 11c2eb3f-f58a-5e15-aaf9-620b7671f6d7
+		summarizeBy: none
+		sourceColumn: [Value2]
+		sortByColumn: 'Metric Order'
+
+		extendedProperty ParameterMetadata =
+				{
+				  "version": 3,
+				  "kind": 2
+				}
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Metric Order'
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: a591a931-a725-5a19-a509-c54d5617930c
+		summarizeBy: none
+		sourceColumn: [Value3]
+
+		annotation SummarizationSetBy = User
+
+	partition Metric = calculated
+		mode: import
+		source =
+				{
+					("Net revenue", NAMEOF ( [Net Revenue] ), 0),
+					("Gross margin %", NAMEOF ( [Gross Margin %] ), 1),
+					("Buying customers", NAMEOF ( [Buying Customers] ), 2),
+					("Visits", NAMEOF ( [Visits] ), 3)
+				}
+
+	annotation PBI_Id = 667c29014f86532694a2f151547d2092

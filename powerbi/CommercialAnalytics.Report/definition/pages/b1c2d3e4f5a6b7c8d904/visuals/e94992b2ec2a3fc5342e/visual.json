@@ -3,9 +3,9 @@
   "name": "e94992b2ec2a3fc5342e",
   "position": {
     "x": 16,
-    "y": 58,
+    "y": 124,
     "z": 5000,
-    "height": 40,
+    "height": 18,
     "width": 520,
     "tabOrder": 5000
   },
@@ -19,11 +19,11 @@
               {
                 "textRuns": [
                   {
-                    "value": "Unpaid invoices on 30 September 2026, by segment and customer",
+                    "value": "Unpaid invoices on 30 September 2026, by segment and customer. Invoices are not split by category.",
                     "textStyle": {
                       "fontFamily": "Segoe UI",
-                      "fontSize": "13px",
-                      "color": "#5D6876"
+                      "fontSize": "10px",
+                      "color": "#3B434B"
                     }
                   }
                 ],

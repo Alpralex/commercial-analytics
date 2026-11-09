@@ -1,12 +1,14 @@
 table dim_customer
 	lineageTag: 9751f900-1686-4cb1-ad1c-3db0d06c747b
 
-	measure Customers = COUNTROWS ( dim_customer )
+	/// Customers, following the Sales rep slicer through the account rep.
+	measure Customers =
+			CALCULATE ( COUNTROWS ( dim_customer ), TREATAS ( VALUES ( dim_rep[rep_id] ), dim_customer[account_rep_id] ) )
 		formatString: #,0
 		lineageTag: 692044af-d033-40b9-8082-9c1830177db2
 
 	/// Customers whose last visit was more than 60 days before the snapshot date (30 Sep 2026).
-	measure 'Customers Without Visit 60+' = CALCULATE ( COUNTROWS ( dim_customer ), dim_customer[visit_recency] = "No visit 60+ days" )
+	measure 'Customers Without Visit 60+' = CALCULATE ( COUNTROWS ( dim_customer ), dim_customer[visit_recency] = "No visit 60+ days", TREATAS ( VALUES ( dim_rep[rep_id] ), dim_customer[account_rep_id] ) )
 		formatString: #,0
 		lineageTag: 7792d1c9-c0b9-4204-8fde-50c869ccfa2a
 
@@ -15,12 +17,14 @@ table dim_customer
 			CALCULATE (
 				COUNTROWS ( dim_customer ),
 				dim_customer[visit_recency] = "No visit 60+ days",
-				dim_customer[customer_status] IN { "Active", "Lapsing" }
+				dim_customer[customer_status] IN { "Active", "Lapsing" },
+				TREATAS ( VALUES ( dim_rep[rep_id] ), dim_customer[account_rep_id] )
 			)
 		formatString: #,0
 		lineageTag: 4338694e-0f91-46fa-8e2b-0e9f51383466
 
 	column customer_id
+		isHidden
 		dataType: string
 		isKey
 		lineageTag: dbc4f45b-bc78-4a2a-ade6-130a8aad5411
@@ -52,6 +56,7 @@ table dim_customer
 		sourceColumn: district
 
 	column account_rep_id
+		isHidden
 		dataType: string
 		lineageTag: 8322e98a-a335-4aee-86f6-b9ba0e3a1bbe
 		summarizeBy: none

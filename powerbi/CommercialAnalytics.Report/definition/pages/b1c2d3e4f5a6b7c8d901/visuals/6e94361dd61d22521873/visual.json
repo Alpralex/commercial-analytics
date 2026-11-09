@@ -3,9 +3,9 @@
   "name": "6e94361dd61d22521873",
   "position": {
     "x": 16,
-    "y": 58,
+    "y": 124,
     "z": 9000,
-    "height": 40,
+    "height": 18,
     "width": 520,
     "tabOrder": 9000
   },
@@ -19,11 +19,11 @@
               {
                 "textRuns": [
                   {
-                    "value": "Agricultural supplies distributor, sales to 30 September 2026",
+                    "value": "B2B distributor, sales to 30 September 2026",
                     "textStyle": {
                       "fontFamily": "Segoe UI",
-                      "fontSize": "13px",
-                      "color": "#5D6876"
+                      "fontSize": "10px",
+                      "color": "#3B434B"
                     }
                   }
                 ],

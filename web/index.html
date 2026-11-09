@@ -3,55 +3,55 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@500;600&family=IBM+Plex+Mono:wght@400&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
 /* Layout: a sales director's Monday brief. Findings first, one filter row, then one row of panels per question: region trend, discounting, call list, receivables, seasonality. */
 :root {
-  --paper: #f7f8f9;
-  --sheet: #ffffff;
-  --ink: #1b2430;
-  --muted: #5d6876;
-  --rule: #dce0e5;
-  --grid: #eceff2;
-  --signal: #1f5a85;
-  --signal-soft: #e6eef5;
-  --pt: #b45309;
-  --s1: #2a78d6;
-  --s2: #eb6834;
-  --s3: #1baf7a;
-  --seq-1: #cde2fb; --seq-2: #9ec5f4; --seq-3: #6da7ec; --seq-4: #3987e5; --seq-5: #256abf;
-  --good: #1f7a35;
-  --warn: #9a6c00;
-  --display: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
-  --serif: "IBM Plex Serif", Georgia, serif;
-  --body: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+  --paper: #c4cbd2;
+  --sheet: #eef1f4;
+  --ink: #182027;
+  --muted: #3b434b;
+  --rule: #a1a9af;
+  --grid: #d9dee3;
+  --signal: #970d63;
+  --signal-soft: #f1dce6;
+  --pt: #970d63;
+  --s1: #3d5a73;
+  --s2: #970d63;
+  --s3: #6e767d;
+  --seq-1: #d5dde4; --seq-2: #a9b8c5; --seq-3: #7f93a5; --seq-4: #556e85; --seq-5: #2f4a63;
+  --good: #1f6b3a;
+  --warn: #970d63;
+  --display: "Hanken Grotesk", system-ui, "Helvetica Neue", Arial, sans-serif;
+  --serif: "Newsreader", Georgia, serif;
+  --body: "Newsreader", Georgia, serif;
   --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --paper: #121519; --sheet: #181c21; --ink: #e3e7eb; --muted: #97a2ad; --rule: #2a3038; --grid: #20252c;
-    --signal: #86b6da; --signal-soft: #1a2633;
-    --pt: #f0a04b; --s1: #3987e5; --s2: #d95926; --s3: #199e70;
-    --seq-1: #1a2c40; --seq-2: #184f95; --seq-3: #1c5cab; --seq-4: #2a78d6; --seq-5: #5598e7;
-    --good: #5cb873; --warn: #d9a63a;
+    --paper: #13171b; --sheet: #1b2026; --ink: #e3e7eb; --muted: #9aa4ae; --rule: #333b44; --grid: #242a31;
+    --signal: #e07ab0; --signal-soft: #3a1f2e;
+    --pt: #e07ab0; --s1: #8fb0cc; --s2: #e07ab0; --s3: #8a939b;
+    --seq-1: #26313b; --seq-2: #3b5166; --seq-3: #557189; --seq-4: #7593ad; --seq-5: #9fb9cf;
+    --good: #6cc08a; --warn: #e07ab0;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --paper: #121519; --sheet: #181c21; --ink: #e3e7eb; --muted: #97a2ad; --rule: #2a3038; --grid: #20252c;
-  --signal: #86b6da; --signal-soft: #1a2633;
-  --pt: #f0a04b; --s1: #3987e5; --s2: #d95926; --s3: #199e70;
-  --seq-1: #1a2c40; --seq-2: #184f95; --seq-3: #1c5cab; --seq-4: #2a78d6; --seq-5: #5598e7;
-  --good: #5cb873; --warn: #d9a63a;
+  --paper: #13171b; --sheet: #1b2026; --ink: #e3e7eb; --muted: #9aa4ae; --rule: #333b44; --grid: #242a31;
+    --signal: #e07ab0; --signal-soft: #3a1f2e;
+    --pt: #e07ab0; --s1: #8fb0cc; --s2: #e07ab0; --s3: #8a939b;
+    --seq-1: #26313b; --seq-2: #3b5166; --seq-3: #557189; --seq-4: #7593ad; --seq-5: #9fb9cf;
+    --good: #6cc08a; --warn: #e07ab0;
   color-scheme: dark;
 }
 body { background: var(--paper); color: var(--ink); font-family: var(--body); font-size: 1rem; line-height: 1.55; margin: 0; }
 .wrap { max-width: 72rem; margin: 0 auto; padding-block: 2.5rem 4rem; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 2rem; }
 h1, h2, h3 { font-family: var(--display); margin: 0; line-height: 1.15; text-wrap: balance; }
-h1 { font-family: var(--serif); font-size: clamp(1.8rem, 4.2vw, 2.5rem); font-weight: 600; }
+h1 { font-family: var(--display); font-size: clamp(1.8rem, 4.2vw, 2.6rem); font-weight: 600; letter-spacing: -0.02em; padding-bottom: .5rem; border-bottom: 2px solid var(--ink); }
 h2 { font-size: 1.05rem; font-weight: 600; }
 p { margin: 0; max-width: 68ch; }
-.label { font-size: 0.88rem; color: var(--muted); }
+.label { font-size: 0.88rem; color: var(--muted); font-family: var(--display); }
 .crumb { font-size: 0.9rem; }
 a { color: var(--signal); text-underline-offset: 3px; }
 header { display: grid; gap: 0.75rem; }
@@ -59,7 +59,7 @@ header { display: grid; gap: 0.75rem; }
 
 .findings { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr)); gap: 1rem; counter-reset: f; }
 .finding { border-top: 1px solid var(--ink); padding-top: 0.75rem; display: grid; gap: 0.35rem; align-content: start; min-width: 0; }
-.finding b { font-weight: 600; font-size: 1rem; }
+.finding b { font-family: var(--display); font-weight: 600; font-size: 1rem; }
 
 .filters { display: flex; flex-wrap: wrap; gap: 0.75rem 1.5rem; align-items: center; padding: 0.75rem 0; border-block: 1px solid var(--rule); position: sticky; top: env(safe-area-inset-top, 0px); background: var(--paper); z-index: 5; }
 .filters .grp { display: flex; flex-wrap: wrap; gap: 0.5rem 0.75rem; align-items: center; min-width: 0; }
@@ -73,19 +73,19 @@ button:focus-visible, select:focus-visible, a:focus-visible { outline: 2px solid
 .reset { font-family: var(--body); font-size: 0.85rem; background: none; border: 0; color: var(--signal); cursor: pointer; text-decoration: underline; }
 
 .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 10.5rem), 1fr)); gap: 1rem; }
-.kpi { background: var(--sheet); border: 1px solid var(--rule); border-radius: 2px; padding: 1rem; display: grid; gap: 0.25rem; min-width: 0; }
-.kpi .v { font-family: var(--serif); font-size: 1.7rem; font-weight: 500; font-variant-numeric: tabular-nums; }
+.kpi { background: var(--sheet); border: 1px solid var(--rule); border-top: 2px solid var(--ink); border-radius: 2px; padding: 1rem; display: grid; gap: 0.25rem; min-width: 0; }
+.kpi .v { font-family: var(--mono); font-size: 1.55rem; font-weight: 500; font-variant-numeric: tabular-nums; }
 .kpi .d { font-size: 0.85rem; color: var(--muted); }
 .up { color: var(--good); } .down { color: var(--warn); }
 
 .q { display: grid; gap: 0.75rem; }
 .q > .label { font-weight: 600; letter-spacing: 0.02em; }
 .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 30rem), 1fr)); gap: 1.25rem; }
-.panel { background: var(--sheet); border: 1px solid var(--rule); border-radius: 2px; padding: 1.1rem; display: grid; gap: 0.75rem; align-content: start; min-width: 0; }
+.panel { background: var(--sheet); border: 1px solid var(--rule); border-top: 2px solid var(--ink); border-radius: 2px; padding: 1.1rem; display: grid; gap: 0.75rem; align-content: start; min-width: 0; }
 .panel .sub { font-size: 0.9rem; color: var(--muted); }
 .chart { position: relative; width: 100%; }
 .chart svg { display: block; width: 100%; height: auto; overflow: visible; }
-.chart text { font-family: var(--body); font-size: 11px; fill: var(--muted); }
+.chart text { font-family: var(--display); font-size: 11px; fill: var(--muted); }
 .chart .lbl { fill: var(--ink); font-weight: 600; }
 .legend { display: flex; flex-wrap: wrap; gap: 0.25rem 1rem; font-size: 0.85rem; color: var(--ink); }
 .legend i { display: inline-block; width: 14px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 0.35rem; }
@@ -96,7 +96,7 @@ button:focus-visible, select:focus-visible, a:focus-visible { outline: 2px solid
 
 .tbl-wrap { overflow-x: auto; }
 table { border-collapse: collapse; width: 100%; font-size: 0.85rem; }
-th, td { padding: 0.4rem 0.55rem; text-align: right; border-bottom: 1px solid var(--rule); font-variant-numeric: tabular-nums; white-space: nowrap; }
+th, td { font-family: var(--display); padding: 0.4rem 0.55rem; text-align: right; border-bottom: 1px solid var(--rule); font-variant-numeric: tabular-nums; white-space: nowrap; }
 th { font-size: 0.8rem; font-weight: 600; color: var(--muted); }
 th:first-child, td:first-child { text-align: left; }
 td.l, th.l { text-align: left; }
@@ -116,20 +116,52 @@ tr.hit-x:hover td { background: var(--signal-soft); }
 tr.hit-x.on td { background: var(--signal-soft); font-weight: 600; }
 .chart svg circle.hit-x, .chart svg path.hit-x { cursor: pointer; }
 .chart svg circle.hit-x:focus { outline: none; }
+
+.links { display: flex; flex-wrap: wrap; gap: .5rem 1rem; align-items: center; }
+.btn { font-family: var(--display); font-weight: 500; font-size: .9rem; border: 1px solid var(--ink); border-radius: 2px; padding: .45rem .9rem; color: var(--ink); text-decoration: none; background: transparent; }
+.btn.primary { background: var(--signal); border-color: var(--signal); color: #fff; }
+.btn:hover { background: var(--signal-soft); }
+.btn.primary:hover { filter: brightness(.9); background: var(--signal); }
+.jump { display: flex; flex-wrap: wrap; gap: .25rem .9rem; font-family: var(--display); font-size: .85rem; width: 100%; padding-bottom: .5rem; border-bottom: 1px solid var(--rule); }
+.jump a { color: var(--ink); text-decoration: none; border-bottom: 2px solid transparent; }
+.jump a:hover { border-bottom-color: var(--signal); }
+.headline { font-family: var(--display); font-weight: 600; font-size: clamp(1.05rem, 2.2vw, 1.3rem); line-height: 1.35; color: var(--signal); max-width: 60ch; margin: 0; text-wrap: balance; }
+.headline-note { font-size: .85rem; color: var(--muted); margin-top: .35rem; }
+.q { scroll-margin-top: 7rem; }
+dialog.cust { border: 1px solid var(--rule); border-top: 3px solid var(--signal); border-radius: 2px; padding: 0; background: var(--sheet); color: var(--ink); width: min(36rem, calc(100vw - 32px)); }
+dialog.cust::backdrop { background: rgb(19 23 27 / .45); }
+.cust .in { padding: 1.25rem; display: grid; gap: .9rem; }
+.cust h2 { font-size: 1.3rem; }
+.cust .why { font-family: var(--display); font-weight: 600; color: var(--signal); }
+.cust dl { display: grid; grid-template-columns: max-content 1fr; gap: .35rem 1rem; margin: 0; font-size: .92rem; }
+.cust dt { color: var(--muted); font-family: var(--display); }
+.cust dd { margin: 0; font-family: var(--mono); font-size: .88rem; }
+.cust .close { justify-self: end; }
+#call-table tbody tr { cursor: pointer; }
+#call-table tbody tr:hover td { background: var(--signal-soft); }
 </style>
 
 
 <main class="wrap">
   <header>
     <p class="crumb"><a href="/">Guilherme Rigonato</a> <span class="label">/ Projects</span></p>
-    <span class="label">Synthetic data · animal-health distributor, Portugal · Jan 2024–Sep 2026</span>
+    <span class="label">Synthetic data · B2B distributor, Portugal · Jan 2024–Sep 2026</span>
     <h1>Where is a distributor losing revenue, margin and cash?</h1>
     <p>A sales director's view of revenue, rep visits, discounting and receivables, the kind of app I relied on in seven years of sales leadership at a distributor. Built on generated data with documented rules, modelled in SQL with dbt and checked by automated tests; the same model runs in Qlik Sense and Power BI.</p>
+    <div class="links">
+      <a class="btn primary" href="https://app.powerbi.com/view?r=eyJrIjoiN2IzMWEwZWUtNmQxYy00NGQ0LTgzZjctYzJhNzk0MDk3MmUxIiwidCI6IjY2MDMwOWU1LWI1YWEtNDQzNS1iMDU2LTJhYmViOGZmNDZjNyJ9" target="_blank" rel="noopener">Open the Power BI report ↗</a>
+      <a class="btn" href="notebook/">Python notebook</a>
+      <a class="btn" href="https://github.com/Alpralex/commercial-analytics">Code on GitHub</a>
+    </div>
     <div class="meta">
       <span>Snapshot: 30 Sep 2026</span>
       <span>dbt + DuckDB · 23 models · 64 tests</span>
       <span id="meta-rows">Order lines: …</span>
       <span>Amounts in euros, sales excl. VAT</span>
+    </div>
+    <div>
+      <p class="headline" id="headline" aria-live="polite"></p>
+      <p class="headline-note">This sentence is computed from the data and rewrites itself when you use the filters below. Click a customer in the call list to open its card.</p>
     </div>
   </header>
 
@@ -142,6 +174,7 @@ tr.hit-x.on td { background: var(--signal-soft); font-weight: 600; }
   </section>
 
   <div class="filters" role="group" aria-label="Filters">
+    <nav class="jump" aria-label="Sections"><a href="#t-q1">Regions</a><a href="#t-q2">Margin</a><a href="#t-q3">Call list</a><a href="#t-q4">Cash</a><a href="#t-q5">Seasonality</a><a href="#t-method">How it is built</a></nav>
     <div class="grp">
       <label class="label" for="region-sel">Region</label>
       <select id="region-sel">
@@ -163,8 +196,8 @@ tr.hit-x.on td { background: var(--signal-soft); font-weight: 600; }
 
   <section class="kpis" aria-label="Headline numbers" id="kpis"></section>
 
-  <section class="q" aria-labelledby="t-q1">
-    <span class="label" id="t-q1">1 · Which region is falling, and why?</span>
+  <section class="q" id="q1" aria-labelledby="t-q1">
+    <span class="label" id="t-q1" style="scroll-margin-top:7rem">1 · Which region is falling, and why?</span>
     <div class="grid2">
       <div class="panel">
         <div><h2>Revenue change by region</h2><p class="sub" id="region-sub"></p></div>
@@ -179,7 +212,7 @@ tr.hit-x.on td { background: var(--signal-soft); font-weight: 600; }
   </section>
 
   <section class="q" aria-labelledby="t-q2">
-    <span class="label" id="t-q2">2 · Who gives margin away?</span>
+    <span class="label" id="t-q2" style="scroll-margin-top:7rem">2 · Who gives margin away?</span>
     <div class="grid2">
       <div class="panel">
         <div><h2>Discount and gross margin by rep</h2><p class="sub" id="scatter-sub">Each circle is a rep, sized by net revenue in the period.</p></div>
@@ -193,7 +226,7 @@ tr.hit-x.on td { background: var(--signal-soft); font-weight: 600; }
   </section>
 
   <section class="q" aria-labelledby="t-q3">
-    <span class="label" id="t-q3">3 · Which customers should we call this week?</span>
+    <span class="label" id="t-q3" style="scroll-margin-top:7rem">3 · Which customers should we call this week?</span>
     <div class="grid2">
       <div class="panel">
         <div><h2>Call list</h2><p class="sub" id="call-sub"></p></div>
@@ -207,7 +240,7 @@ tr.hit-x.on td { background: var(--signal-soft); font-weight: 600; }
   </section>
 
   <section class="q" aria-labelledby="t-q4">
-    <span class="label" id="t-q4">4 · Where is the cash stuck?</span>
+    <span class="label" id="t-q4" style="scroll-margin-top:7rem">4 · Where is the cash stuck?</span>
     <div class="grid2">
       <div class="panel">
         <div><h2>Open receivables by segment and age</h2><p class="sub" id="aging-sub"></p></div>
@@ -222,7 +255,7 @@ tr.hit-x.on td { background: var(--signal-soft); font-weight: 600; }
   </section>
 
   <section class="q" aria-labelledby="t-q5">
-    <span class="label" id="t-q5">5 · What is seasonal?</span>
+    <span class="label" id="t-q5" style="scroll-margin-top:7rem">5 · What is seasonal?</span>
     <div class="grid2">
       <div class="panel">
         <div><h2>Seasonal index by category</h2><p class="sub" id="season-sub"></p></div>
@@ -237,15 +270,26 @@ tr.hit-x.on td { background: var(--signal-soft); font-weight: 600; }
   </section>
 
   <section class="method" aria-labelledby="t-method">
-    <h2 id="t-method">How the numbers are built</h2>
+    <h2 id="t-method" style="scroll-margin-top:7rem">How the numbers are built</h2>
     <ul>
       <li><b>Data:</b> synthetic, written by a Python generator with a fixed seed: 1,800 customers in four segments and the four mainland NUTS II regions, 400 SKUs in six categories, 12 reps, about 951,000 order lines, 68,000 visits and 131,000 invoices from January 2024 to September 2026. The patterns found here are rules in the generator, documented in its source, so the page can be checked against them.</li>
       <li><b>Model:</b> dbt on DuckDB. Staging views read the CSV files; marts form a star schema (dim_customer, dim_product, dim_rep, dim_date, fct_sales_lines, fct_visits, fct_invoices) plus one or two marts per question, with tests for keys, relationships and accepted values. The same model is built in Qlik Sense (load script and master items) and in Power BI (TMDL semantic model).</li>
       <li><b>Definitions:</b> net revenue excludes VAT; discount = 1 − net ÷ list-price sales; gross margin = (net − cost) ÷ net. Revenue change compares the period with the same months a year earlier. Region is the customer's region.</li>
       <li><b>Snapshot measures:</b> days since visit, the call list and receivables aging are measured on 30 Sep 2026, so they do not follow the period filter. Aging buckets count days past the due date of invoices still unpaid on that day. The seasonal index uses the complete years 2024 and 2025 only.</li>
     </ul>
+    <p class="note">Code: <a href="https://github.com/Alpralex/commercial-analytics">github.com/Alpralex/commercial-analytics</a></p>
   </section>
 </main>
+
+<dialog class="cust" id="cust" aria-labelledby="cust-name">
+  <div class="in">
+    <div><span class="label" id="cust-kicker">Customer detail</span><h2 id="cust-name"></h2></div>
+    <p class="why" id="cust-why"></p>
+    <dl id="cust-dl"></dl>
+    <p class="note">The Power BI version has the same idea as a drill-through page: right-click any customer, then Drill through &gt; Customer detail.</p>
+    <button type="button" class="btn close" id="cust-close">Close</button>
+  </div>
+</dialog>
 
 <script>
 (function () {
@@ -453,9 +497,14 @@ tr.hit-x.on td { background: var(--signal-soft); font-weight: 600; }
     document.getElementById('call-sub').textContent = rows.length + ' customers in ' + selLabel() + ' with no visit for more than 60 days on 30 Sep 2026; together they bought ' + eur(tot) + ' in the last 12 months. Top 12 by that revenue; Days = days since the last visit.';
     var head = '<thead><tr><th>Customer</th>' + (state.region ? '' : '<th class="l">Region</th>') + '<th class="l">Rep</th><th>Days</th><th>12 m</th></tr></thead>';
     var body = rows.slice(0, 12).map(function (c) {
-      return '<tr><td>' + esc(c[2]) + '<br><span class="note">' + esc(c[3]) + '</span></td>' + (state.region ? '' : '<td class="l">' + esc(shortRegion(c[4])) + '</td>') + '<td class="l">' + c[6] + '</td><td>' + c[8] + '</td><td>' + eur(c[11]) + '</td></tr>';
+      return '<tr tabindex="0" data-cid="' + esc(c[1]) + '" aria-label="Open the card for ' + esc(c[2]) + '"><td>' + esc(c[2]) + '<br><span class="note">' + esc(c[3]) + '</span></td>' + (state.region ? '' : '<td class="l">' + esc(shortRegion(c[4])) + '</td>') + '<td class="l">' + c[6] + '</td><td>' + c[8] + '</td><td>' + eur(c[11]) + '</td></tr>';
     }).join('');
     document.getElementById('call-table').innerHTML = rows.length ? head + '<tbody>' + body + '</tbody>' : '<tbody><tr><td class="empty">No customers in this selection.</td></tr></tbody>';
+    document.querySelectorAll('#call-table tr[data-cid]').forEach(function (tr) {
+      var open = function () { openCustomer(tr.dataset.cid); };
+      tr.addEventListener('click', open);
+      tr.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } });
+    });
   }
 
   function renderRecency() {
@@ -562,10 +611,53 @@ tr.hit-x.on td { background: var(--signal-soft); font-weight: 600; }
     rowClicks('season-table', function (tr) { pickCat(tr.dataset.cat); });
   }
 
+  // Live headline: one sentence that answers the page for the current filters
+  function renderHeadline() {
+    var L = PERIOD_LABEL[state.period], out;
+    var cur = sales('cur', regionPred), prev = sales('prev', regionPred);
+    var calls = D.call.filter(function (c) { return inRegion(c[4]); });
+    if (!L[1]) {
+      out = 'Net revenue ' + eur(cur.n) + ' in ' + L[0] + (state.region ? ' in ' + state.region : '') + '. ' + int(calls.length) + ' customers have had no visit for 60+ days.';
+    } else if (state.region) {
+      var vc = visits('cur', regionPred), vp = visits('prev', regionPred);
+      out = state.region + ': revenue ' + signed(change(cur.n, prev.n)) + ' and visits ' + signed(change(vc, vp)) + ' on ' + L[1] + '. ' + int(calls.length) + ' customers here have had no visit for 60+ days.';
+    } else {
+      var worst = D.meta.regions.map(function (reg) { var p = function (r) { return r[1] === reg; }, c = sales('cur', p), pr = sales('prev', p); return { reg: reg, v: change(c.n, pr.n) }; })
+        .sort(function (a, b) { return a.v - b.v; })[0];
+      out = 'Revenue is ' + signed(change(cur.n, prev.n)) + ' on ' + L[1] + '. ' + worst.reg + ' is the weakest region at ' + signed(worst.v) + ', and ' + int(calls.length) + ' customers have had no visit for 60+ days.';
+    }
+    document.getElementById('headline').textContent = out;
+  }
+
+  // Customer card: the web version of the Power BI drill-through page
+  function openCustomer(id) {
+    var c = D.call.find(function (x) { return x[1] === id; }); if (!c) return;
+    var rep = D.meta.reps.find(function (r) { return r[0] === c[6]; }) || [c[6], c[6], '', null];
+    var rs = repStats().find(function (r) { return r.id === c[6]; });
+    var p = function (r) { return r[1] === c[4]; }, rc = sales('cur', p), rp = sales('prev', p), L = PERIOD_LABEL[state.period];
+    document.getElementById('cust-kicker').textContent = 'Customer detail · #' + c[0] + ' on the call list';
+    document.getElementById('cust-name').textContent = c[2];
+    document.getElementById('cust-why').textContent = 'Call this week: no visit for ' + c[8] + ' days, ' + eur(c[11]) + ' bought in the last 12 months' + (c[10] === 'Active' ? ', and still ordering.' : ', status ' + c[10].toLowerCase() + '.');
+    var rows = [
+      ['Segment', c[3]], ['Region', c[4] + ' · ' + c[5]],
+      ['Sales rep', rep[1] + ' (' + rep[0] + ')' + (rep[3] ? ', left ' + rep[3].slice(0, 7) : '')],
+      ['Last visit', c[7] + ' · ' + c[8] + ' days before 30 Sep 2026'],
+      ['Last order', c[9] || '–'], ['Status', c[10]],
+      ['Bought, last 12 months', eur(c[11])],
+      ['Rep discount, ' + L[0], rs ? pct(rs.disc) + ' (margin ' + pct(rs.margin) + ')' : '–'],
+      ['Region revenue, ' + L[0], rp ? signed(change(rc.n, rp.n)) + ' on ' + L[1] : eur(rc.n)]
+    ];
+    document.getElementById('cust-dl').innerHTML = rows.map(function (r) { return '<dt>' + esc(r[0]) + '</dt><dd>' + esc(r[1]) + '</dd>'; }).join('');
+    var dlg = document.getElementById('cust');
+    if (dlg.showModal) dlg.showModal(); else dlg.setAttribute('open', '');
+  }
+  document.getElementById('cust-close').addEventListener('click', function () { document.getElementById('cust').close(); });
+  document.getElementById('cust').addEventListener('click', function (e) { if (e.target === this) this.close(); });
+
   function render() {
     document.getElementById('reset').hidden = Object.keys(DEF).every(function (k) { return state[k] === DEF[k]; });
     var reps = repStats();
-    renderKpis(); renderRegions(); renderMonthly(); renderScatter(reps); renderReps(reps); renderCalls(); renderRecency(); renderAging(); renderPay(); renderSeason(); renderSelection();
+    renderHeadline(); renderKpis(); renderRegions(); renderMonthly(); renderScatter(reps); renderReps(reps); renderCalls(); renderRecency(); renderAging(); renderPay(); renderSeason(); renderSelection();
   }
   function rowClicks(id, fn) {
     document.querySelectorAll('#' + id + ' tr.hit-x').forEach(function (tr) {
