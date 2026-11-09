@@ -19,7 +19,7 @@
               {
                 "textRuns": [
                   {
-                    "value": "Visits and customer coverage in the South (page filtered to Region = Sul)",
+                    "value": "Visits and customer coverage in the South (page filtered to Region = Sul). Visits are not split by category.",
                     "textStyle": {
                       "fontFamily": "Segoe UI",
                       "fontSize": "10px",

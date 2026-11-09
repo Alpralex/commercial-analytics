@@ -19,7 +19,7 @@
               {
                 "textRuns": [
                   {
-                    "value": "Unpaid invoices on 30 September 2026, by segment and customer",
+                    "value": "Unpaid invoices on 30 September 2026, by segment and customer. Invoices are not split by category.",
                     "textStyle": {
                       "fontFamily": "Segoe UI",
                       "fontSize": "10px",
