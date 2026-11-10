@@ -142,9 +142,97 @@ dialog.cust::backdrop { background: rgb(19 23 27 / .45); }
 </style>
 
 
+<style id="i18n-style">
+.crumb { max-width: none; display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.4rem; }
+.lang-sw { margin-left: auto; display: inline-flex; border: 1px solid var(--rule); border-radius: 2px; overflow: hidden; }
+.lang-sw button { font-family: var(--display); font-size: 0.8rem; letter-spacing: 0.04em; padding: 0.2rem 0.55rem; background: var(--sheet); color: var(--ink); border: 0; border-right: 1px solid var(--rule); cursor: pointer; }
+.lang-sw button:last-child { border-right: 0; }
+.lang-sw button[aria-pressed="true"] { background: var(--signal-soft); box-shadow: inset 0 -2px 0 var(--signal); font-weight: 600; }
+.lang-sw button:focus-visible { outline: 2px solid var(--signal); outline-offset: -2px; }
+</style>
+<script id="i18n-core">
+// Language layer shared by the portfolio dashboards. English is written in the page; Portuguese (pt-PT) comes from I18N.add({...}).
+// Order of choice: ?lang= in the URL (the home page adds it), then the visitor's last choice (localStorage "lang", the same key the home page uses), then English.
+(function () {
+  var KEY = 'lang';
+  function pick() {
+    var q = null;
+    try { q = new URLSearchParams(location.search).get('lang'); } catch (e) {}
+    if (q === 'pt' || q === 'en') { try { localStorage.setItem(KEY, q); } catch (e) {} return q; }
+    try { var s = localStorage.getItem(KEY); if (s === 'pt' || s === 'en') return s; } catch (e) {}
+    try { if (/^\/pt\/?$/.test(new URL(document.referrer).pathname)) return 'pt'; } catch (e) {}
+    return 'en';
+  }
+  var I = window.I18N = { lang: pick(), dict: {}, fns: [] };
+  function norm(s) { return String(s).replace(/\s+/g, ' ').trim(); }
+  I.add = function (d) { for (var k in d) I.dict[norm(k)] = d[k]; };
+  I.pt = function () { return I.lang === 'pt'; };
+  // Inline pair for sentences whose word order differs: I18N.p('English', 'Português').
+  I.p = function (en, pt) { return I.lang === 'pt' ? pt : en; };
+  // Text: the Portuguese entry for an English string, or the string itself.
+  I.t = function (s) { if (I.lang !== 'pt') return s; var v = I.dict[norm(s)]; return v == null ? s : v; };
+  // Numbers already formatted the English way ("1,234.5") become "1 234,5" in Portuguese.
+  I.n = function (s) {
+    s = String(s); if (I.lang !== 'pt') return s;
+    return s.replace(/(\d),(?=\d{3}(?:\D|$))/g, '$1 ').replace(/(\d)\.(\d)/g, '$1,$2');
+  };
+  I.locale = function () { return I.lang === 'pt' ? 'pt-PT' : 'en-US'; };
+  I.on = function (fn) { I.fns.push(fn); };
+  var ATTRS = ['aria-label', 'title', 'placeholder'];
+  function swapAttrs(el) {
+    ATTRS.forEach(function (a) {
+      if (!el.hasAttribute(a)) return;
+      el._enA = el._enA || {};
+      if (el._enA[a] == null) { if (!(norm(el.getAttribute(a)) in I.dict)) return; el._enA[a] = el.getAttribute(a); }
+      el.setAttribute(a, I.t(el._enA[a]));
+    });
+    if (el.tagName === 'A' && (el.getAttribute('href') === '/' || el._enHref != null)) {
+      if (el._enHref == null) el._enHref = el.getAttribute('href');
+      el.setAttribute('href', I.lang === 'pt' ? '/pt/' : '/?lang=en');
+    }
+  }
+  // Static text in the page: a whole element when its markup has an entry, otherwise each text node.
+  function walk(node) {
+    for (var c = node.firstChild; c; c = c.nextSibling) {
+      if (c.nodeType === 3) {
+        if (c._en == null) { var k = norm(c.nodeValue); if (!k || !(k in I.dict)) continue; c._en = c.nodeValue; }
+        var en = c._en, lead = en.match(/^\s*/)[0], trail = en.match(/\s*$/)[0];
+        c.nodeValue = I.lang === 'pt' ? lead + I.dict[norm(en)] + trail : en;
+      } else if (c.nodeType === 1) {
+        if (/^(SCRIPT|STYLE|SVG|svg)$/.test(c.tagName) || c.hasAttribute('data-i18n-skip')) continue;
+        swapAttrs(c);
+        if (c._enH == null && c.children.length && (norm(c.innerHTML) in I.dict)) c._enH = c.innerHTML;
+        if (c._enH != null) { c.innerHTML = I.lang === 'pt' ? I.dict[norm(c._enH)] : c._enH; continue; }
+        walk(c);
+      }
+    }
+  }
+  I.apply = function () {
+    document.documentElement.lang = I.lang === 'pt' ? 'pt-PT' : 'en';
+    if (I._title == null) I._title = document.title;
+    document.title = I.t(I._title);
+    walk(document.body);
+    document.querySelectorAll('.lang-sw button').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.lang === I.lang)); });
+  };
+  I.set = function (lang) {
+    if (lang === I.lang) return;
+    I.lang = lang;
+    try { localStorage.setItem(KEY, lang); } catch (e) {}
+    try { var u = new URL(location.href); u.searchParams.set('lang', lang); history.replaceState(history.state, '', u); } catch (e) {}
+    I.apply();
+    I.fns.forEach(function (fn) { try { fn(); } catch (e) { if (window.console) console.error(e); } });
+  };
+  // Runs after the page script: translate the static text and wire the EN / PT buttons.
+  I.start = function () {
+    document.querySelectorAll('.lang-sw button').forEach(function (b) { b.addEventListener('click', function () { I.set(b.dataset.lang); }); });
+    I.apply();
+  };
+})();
+</script>
+
 <main class="wrap">
   <header>
-    <p class="crumb"><a href="/">Guilherme Rigonato</a> <span class="label">/ Projects</span></p>
+    <p class="crumb"><a href="/">Guilherme Rigonato</a> <span class="label">/ Projects</span><span class="lang-sw" role="group" aria-label="Language · Idioma" data-i18n-skip><button type="button" data-lang="en" lang="en" title="English">EN</button><button type="button" data-lang="pt" lang="pt-PT" title="Português">PT</button></span></p>
     <span class="label">Synthetic data · B2B distributor, Portugal · Jan 2024–Sep 2026</span>
     <h1>Where is a distributor losing revenue, margin and cash?</h1>
     <p>A sales director's view of revenue, rep visits, discounting and receivables, the kind of app I relied on in seven years of sales leadership at a distributor. Built on generated data with documented rules, modelled in SQL with dbt and checked by automated tests; the same model runs in Qlik Sense and Power BI.</p>
@@ -291,14 +379,155 @@ dialog.cust::backdrop { background: rgb(19 23 27 / .45); }
   </div>
 </dialog>
 
+<script id="i18n-pt">
+I18N.add({
+"Distributor Commercial Analytics": "Análise comercial de um distribuidor",
+"/ Projects": "/ Projetos",
+"Synthetic data · B2B distributor, Portugal · Jan 2024–Sep 2026": "Dados sintéticos · distribuidor B2B, Portugal · jan 2024–set 2026",
+"Where is a distributor losing revenue, margin and cash?": "Onde é que um distribuidor está a perder vendas, margem e dinheiro?",
+"A sales director's view of revenue, rep visits, discounting and receivables, the kind of app I relied on in seven years of sales leadership at a distributor. Built on generated data with documented rules, modelled in SQL with dbt and checked by automated tests; the same model runs in Qlik Sense and Power BI.": "A visão de um diretor comercial sobre vendas, visitas dos vendedores, descontos e contas a receber: o tipo de aplicação em que me apoiei durante sete anos a liderar as vendas de um distribuidor. Assenta em dados gerados com regras documentadas, modelados em SQL com dbt e validados por testes automáticos; o mesmo modelo corre em Qlik Sense e em Power BI.",
+"Open the Power BI report ↗": "Abrir o relatório Power BI ↗",
+"Python notebook": "Notebook Python (em inglês)",
+"Code on GitHub": "Código no GitHub",
+"Snapshot: 30 Sep 2026": "Data de fecho: 30 set 2026",
+"dbt + DuckDB · 23 models · 64 tests": "dbt + DuckDB · 23 modelos · 64 testes",
+"Amounts in euros, sales excl. VAT": "Valores em euros, vendas sem IVA",
+"This sentence is computed from the data and rewrites itself when you use the filters below. Click a customer in the call list to open its card.": "Esta frase é calculada a partir dos dados e reescreve-se quando usa os filtros abaixo. Clique num cliente da lista de contactos para abrir a respetiva ficha.",
+"Key findings": "Principais conclusões",
+"Finding 1": "Conclusão 1",
+"Finding 2": "Conclusão 2",
+"Finding 3": "Conclusão 3",
+"Finding 4": "Conclusão 4",
+"Finding 5": "Conclusão 5",
+"Sul is the only region falling.": "O Sul é a única região em queda.",
+"Revenue in Sul is down 16.5% in Jan–Sep 2026 on the same months of 2025, while the other regions grew 5–10%. Visits in Sul fell from 2,722 to 1,426 after one of its two reps left in January.": "As vendas no Sul caíram 16,5% entre janeiro e setembro de 2026 face aos mesmos meses de 2025, enquanto as outras regiões cresceram 5 a 10%. As visitas no Sul desceram de 2722 para 1426 depois de um dos seus dois vendedores ter saído em janeiro.",
+"One rep gives margin away.": "Um vendedor está a abdicar de margem.",
+"REP07 discounts 15.1% against 6.0% for the other reps, so gross margin is 13.6% against 21.8%, with lower revenue per customer than the other Lisbon reps. That is about €0.96M of extra discount since January 2024.": "O REP07 concede 15,1% de desconto, contra 6,0% dos restantes vendedores, e a margem bruta fica em 13,6% contra 21,8%, com menos vendas por cliente do que os outros vendedores de Lisboa. São cerca de 0,96 M€ de desconto a mais desde janeiro de 2024.",
+"225 customers have not been visited for 60+ days.": "225 clientes estão há mais de 60 dias sem visita.",
+"They bought €5.4M in the last 12 months. Customers order more often after a visit and lapse when visits stop, so this is the call list.": "Compraram 5,4 M€ nos últimos 12 meses. Os clientes encomendam mais depois de uma visita e deixam de comprar quando as visitas param, por isso esta é a lista de clientes a contactar.",
+"Livestock farms hold the overdue cash.": "As explorações pecuárias concentram as dívidas em atraso.",
+"Farms are 17% of billing but 84% of receivables more than 90 days overdue, and pay 29 days after the due date on average, against 3 days for the other segments.": "As explorações pesam 17% da faturação, mas 84% das contas a receber vencidas há mais de 90 dias, e pagam em média 29 dias depois do vencimento, contra 3 dias nos outros segmentos.",
+"Two categories are seasonal.": "Duas categorias são sazonais.",
+"Vaccines sell 2.0 times as much per month in spring as in winter; parasiticides 2.3 times as much in summer. Pharmaceuticals, pet food, accessories and hygiene are flat.": "As vacinas vendem por mês 2,0 vezes mais na primavera do que no inverno; os antiparasitários, 2,3 vezes mais no verão. Medicamentos, alimentação animal, acessórios e higiene mantêm-se estáveis ao longo do ano.",
+"Filters": "Filtros",
+"Sections": "Secções",
+"Regions": "Regiões",
+"Margin": "Margem",
+"Call list": "Clientes a contactar",
+"Cash": "Tesouraria",
+"Seasonality": "Sazonalidade",
+"How it is built": "Como foi feito",
+"Region": "Região",
+"All regions": "Todas as regiões",
+"Period": "Período",
+"Jan–Sep 2026": "jan–set 2026",
+"Last 12 m": "Últimos 12 m",
+"All": "Tudo",
+"Reset": "Repor",
+"Headline numbers": "Números principais",
+"1 · Which region is falling, and why?": "1 · Que região está a cair, e porquê?",
+"Revenue change by region": "Variação das vendas por região",
+"Revenue and visits by month": "Vendas e visitas por mês",
+"Net revenue": "Vendas líquidas",
+"Visits": "Visitas",
+"Selected period": "Período selecionado",
+"2 · Who gives margin away?": "2 · Quem está a abdicar de margem?",
+"Discount and gross margin by rep": "Desconto e margem bruta por vendedor",
+"Each circle is a rep, sized by net revenue in the period.": "Cada círculo é um vendedor, com tamanho proporcional às vendas líquidas do período.",
+"Reps compared": "Vendedores lado a lado",
+"3 · Which customers should we call this week?": "3 · Que clientes devemos contactar esta semana?",
+"Days since the last visit": "Dias desde a última visita",
+"4 · Where is the cash stuck?": "4 · Onde está o dinheiro parado?",
+"Open receivables by segment and age": "Contas a receber em aberto por segmento e antiguidade",
+"Billing, overdue and payment delay by segment": "Faturação, dívida vencida e atraso de pagamento por segmento",
+"All invoices Jan 2024–Sep 2026, amounts with VAT. Billing = share of invoiced amount. Days late = payment date minus due date, average over paid invoices.": "Todas as faturas de jan 2024 a set 2026, valores com IVA. Faturação = peso no valor faturado. Dias de atraso = data de pagamento menos data de vencimento, em média, nas faturas pagas.",
+"5 · What is seasonal?": "5 · O que é sazonal?",
+"Seasonal index by category": "Índice sazonal por categoria",
+"Other categories": "Outras categorias",
+"Season against winter": "Época alta face ao inverno",
+"Average monthly net revenue in the season ÷ average in winter (Dec, Jan, Feb), complete years 2024 and 2025.": "Vendas líquidas médias por mês na estação ÷ média do inverno (dez, jan, fev), anos completos de 2024 e 2025.",
+"How the numbers are built": "Como os números são calculados",
+"Data:": "Dados:",
+"Model:": "Modelo:",
+"Definitions:": "Definições:",
+"Snapshot measures:": "Medidas à data de fecho:",
+"Code:": "Código:",
+"synthetic, written by a Python generator with a fixed seed: 1,800 customers in four segments and the four mainland NUTS II regions, 400 SKUs in six categories, 12 reps, about 951,000 order lines, 68,000 visits and 131,000 invoices from January 2024 to September 2026. The patterns found here are rules in the generator, documented in its source, so the page can be checked against them.": "sintéticos, criados por um gerador em Python com semente fixa: 1800 clientes em quatro segmentos e nas quatro regiões NUTS II do continente, 400 SKU em seis categorias, 12 vendedores, cerca de 951 000 linhas de encomenda, 68 000 visitas e 131 000 faturas, de janeiro de 2024 a setembro de 2026. Os padrões que a página mostra são regras do gerador, documentadas no código, por isso é possível confrontá-la com elas.",
+"dbt on DuckDB. Staging views read the CSV files; marts form a star schema (dim_customer, dim_product, dim_rep, dim_date, fct_sales_lines, fct_visits, fct_invoices) plus one or two marts per question, with tests for keys, relationships and accepted values. The same model is built in Qlik Sense (load script and master items) and in Power BI (TMDL semantic model).": "dbt sobre DuckDB. As views de staging leem os ficheiros CSV; os marts formam um modelo em estrela (dim_customer, dim_product, dim_rep, dim_date, fct_sales_lines, fct_visits, fct_invoices), mais um ou dois marts por pergunta, com testes de chaves, relações e valores aceites. O mesmo modelo existe em Qlik Sense (script de carga e master items) e em Power BI (modelo semântico em TMDL).",
+"net revenue excludes VAT; discount = 1 − net ÷ list-price sales; gross margin = (net − cost) ÷ net. Revenue change compares the period with the same months a year earlier. Region is the customer's region.": "as vendas líquidas excluem o IVA; desconto = 1 − vendas líquidas ÷ vendas a preço de tabela; margem bruta = (vendas líquidas − custo) ÷ vendas líquidas. A variação compara o período com os mesmos meses do ano anterior. A região é a do cliente.",
+"days since visit, the call list and receivables aging are measured on 30 Sep 2026, so they do not follow the period filter. Aging buckets count days past the due date of invoices still unpaid on that day. The seasonal index uses the complete years 2024 and 2025 only.": "os dias desde a última visita, a lista de clientes a contactar e a antiguidade das contas a receber são medidos a 30 set 2026, por isso não seguem o filtro de período. Os escalões de antiguidade contam os dias após o vencimento das faturas ainda por pagar nesse dia. O índice sazonal usa apenas os anos completos de 2024 e 2025.",
+"Customer detail": "Ficha de cliente",
+"The Power BI version has the same idea as a drill-through page: right-click any customer, then Drill through > Customer detail.": "No Power BI, a mesma ideia é uma página de drill-through: clique com o botão direito num cliente e escolha Drill through > Customer detail.",
+"Close": "Fechar",
+"Accessories": "Acessórios",
+"Hygiene": "Higiene",
+"Parasiticides": "Antiparasitários",
+"Pet food": "Alimentação animal",
+"Pharmaceuticals": "Medicamentos",
+"Vaccines": "Vacinas",
+"Farm supply store": "Loja agrícola",
+"Livestock farm": "Exploração pecuária",
+"Pet shop": "Loja de animais",
+"Veterinary clinic": "Clínica veterinária",
+"pl:Farm supply store": "lojas agrícolas",
+"pl:Livestock farm": "explorações pecuárias",
+"pl:Pet shop": "lojas de animais",
+"pl:Veterinary clinic": "clínicas veterinárias",
+"Active": "Ativo",
+"Lapsing": "Em risco",
+"Lost": "Perdido",
+"Not due": "Não vencido",
+"Gross margin": "Margem bruta",
+"Rep visits": "Visitas dos vendedores",
+"Buying customers": "Clientes com compras",
+"Customers, no visit 60+ days": "Clientes sem visita há 60+ dias",
+"Overdue more than 90 days": "Vencido há mais de 90 dias",
+"Monthly revenue and visits": "Vendas e visitas mensais",
+"REP12 leaves": "Saída do REP12",
+"Discount off list price →": "Desconto sobre a tabela →",
+"↑ Gross margin": "↑ Margem bruta",
+"Rep": "Vendedor",
+"Discount": "Desconto",
+"Per customer": "Por cliente",
+"Customer": "Cliente",
+"Days": "Dias",
+"12 m": "12 m",
+"No customers in this selection.": "Nenhum cliente nesta seleção.",
+"Customers by days since last visit": "Clientes por dias desde a última visita",
+"Open receivables by segment and aging bucket": "Contas a receber em aberto por segmento e escalão de antiguidade",
+"No open receivables in this selection.": "Sem contas a receber em aberto nesta seleção.",
+"Segment": "Segmento",
+"Billing": "Faturação",
+"Open": "Em aberto",
+"90+ days": "90+ dias",
+"Share of 90+": "Peso nos 90+",
+"Days late": "Dias de atraso",
+"Seasonal index by category and month": "Índice sazonal por categoria e mês",
+"Category": "Categoria",
+"Spring (Mar–May)": "Primavera (mar–mai)",
+"Summer (Jun–Aug)": "Verão (jun–ago)",
+"Clear this filter": "Limpar este filtro",
+"Filtered by": "Filtrado por",
+"Click a bar, circle, line or table row to filter the other charts.": "Clique numa barra, num círculo, numa curva ou numa linha de tabela para filtrar os outros gráficos.",
+"The data files did not load. Reload the page to try again.": "Os ficheiros de dados não carregaram. Recarregue a página para tentar de novo.",
+"all regions": "todas as regiões"
+});
+</script>
 <script>
 (function () {
   var DEF = { region: '', period: 'ytd', rep: '', cat: '', seg: '', band: -1 };
   var state = Object.assign({}, DEF);
   var D = {};
   var NS = 'http://www.w3.org/2000/svg';
+  var T = I18N.t, N = I18N.n;
   var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  var PERIOD_LABEL = {
+  var MONTHS_PT = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+  function MON() { return I18N.pt() ? MONTHS_PT : MONTHS; }
+  function V(s) { return T(s); }
+  function cname(s) { return I18N.pt() ? String(s).replace(/^Customer /, 'Cliente ') : s; }
+  function rname(s) { return I18N.pt() ? String(s).replace(/^Sales rep /, 'Vendedor ') : s; }
+  var PL_PT = { ytd: ['jan–set 2026', 'jan–set 2025'], l12m: ['out 2025–set 2026', 'out 2024–set 2025'], y2025: ['2025', '2024'], all: ['jan 2024–set 2026', null] };
+  var PERIOD_LABEL_EN = {
     ytd: ['Jan–Sep 2026', 'Jan–Sep 2025'], l12m: ['Oct 2025–Sep 2026', 'Oct 2024–Sep 2025'],
     y2025: ['2025', '2024'], all: ['Jan 2024–Sep 2026', null]
   };
@@ -309,16 +538,15 @@ dialog.cust::backdrop { background: rgb(19 23 27 / .45); }
   function css(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
   function niceStep(span, n) { var raw = span / (n || 4), p = Math.pow(10, Math.floor(Math.log10(raw))), m = raw / p; return (m <= 1 ? 1 : m <= 2 ? 2 : m <= 2.5 ? 2.5 : m <= 5 ? 5 : 10) * p; }
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
-  var signed = function (v, d) { return v == null || !isFinite(v) ? '–' : (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v * 100).toFixed(d == null ? 1 : d) + '%'; };
-  var pct = function (v, d) { return v == null || !isFinite(v) ? '–' : (v * 100).toFixed(d == null ? 1 : d) + '%'; };
-  var int = function (v) { return Math.round(v).toLocaleString('en-US'); };
+  var signed = function (v, d) { return v == null || !isFinite(v) ? '–' : (v > 0 ? '+' : v < 0 ? '−' : '') + N(Math.abs(v * 100).toFixed(d == null ? 1 : d)) + '%'; };
+  var pct = function (v, d) { return v == null || !isFinite(v) ? '–' : N((v * 100).toFixed(d == null ? 1 : d)) + '%'; };
+  var int = function (v) { return Math.round(v).toLocaleString(I18N.locale()); };
   function eur(v) {
     var a = Math.abs(v), s = v < 0 ? '−' : '';
-    if (a >= 1e6) return s + '€' + (a / 1e6).toFixed(a >= 1e7 ? 1 : 2) + 'M';
-    if (a >= 1e3) return s + '€' + Math.round(a / 1e3) + 'k';
-    return s + '€' + Math.round(a);
+    var n = a >= 1e6 ? (a / 1e6).toFixed(a >= 1e7 ? 1 : 2) : a >= 1e3 ? Math.round(a / 1e3) : Math.round(a), u = a >= 1e6 ? 'M' : a >= 1e3 ? 'k' : '';
+    return I18N.pt() ? s + N(n) + '\u00a0' + u + '€' : s + '€' + n + u;
   }
-  function ymLabel(ym) { return MONTHS[Number(ym.slice(5, 7)) - 1] + ' ' + ym.slice(0, 4); }
+  function ymLabel(ym) { return MON()[Number(ym.slice(5, 7)) - 1] + ' ' + ym.slice(0, 4); }
   function shortRegion(r) { return r === 'Lisboa e Vale do Tejo' ? 'Lisboa e VT' : r; }
   function inRegion(r) { return !state.region || r === state.region; }
   function inRep(r) { return !state.rep || r === state.rep; }
@@ -348,19 +576,19 @@ dialog.cust::backdrop { background: rgb(19 23 27 / .45); }
   var regionPred = function (r) { return inRegion(r[1]); };
 
   function renderKpis() {
-    var L = PERIOD_LABEL[state.period], cur = sales('cur', regionPred), prev = sales('prev', regionPred);
+    var L = (I18N.pt() ? PL_PT : PERIOD_LABEL_EN)[state.period], cur = sales('cur', regionPred), prev = sales('prev', regionPred);
     var vc = visits('cur', regionPred), vp = visits('prev', regionPred);
     var bc = buyers('cur', state.region), bp = buyers('prev', state.region);
     var calls = D.call.filter(function (c) { return inRegion(c[4]); });
     var od = 0, open = 0; D.pay.forEach(function (r) { if (inRegion(r[0])) { od += r[4]; open += r[3]; } });
-    var vs = function (a, b) { if (b == null) return L[0]; var c = change(a, b); return L[0] + ' · <span class="' + cls(c) + '">' + signed(c) + '</span> vs ' + L[1]; };
+    var vs = function (a, b) { if (b == null) return L[0]; var c = change(a, b); return L[0] + ' · <span class="' + cls(c) + '">' + signed(c) + '</span> ' + I18N.p('vs', 'face a') + ' ' + L[1]; };
     var tiles = [
-      ['Net revenue', eur(cur.n), vs(cur.n, prev ? prev.n : null)],
-      ['Gross margin', pct((cur.n - cur.k) / cur.n), 'Discount ' + pct(1 - cur.n / cur.g) + ' off list price' + (prev ? ' · margin ' + pct((prev.n - prev.k) / prev.n) + ' in ' + L[1] : '')],
-      ['Rep visits', int(vc), vs(vc, vp)],
-      ['Buying customers', bc == null ? '–' : int(bc), vs(bc, bp)],
-      ['Customers, no visit 60+ days', int(calls.length), eur(calls.reduce(function (s, c) { return s + c[11]; }, 0)) + ' bought in the last 12 months · on 30 Sep 2026'],
-      ['Overdue more than 90 days', eur(od), 'of ' + eur(open) + ' open receivables · on 30 Sep 2026']
+      [T('Net revenue'), eur(cur.n), vs(cur.n, prev ? prev.n : null)],
+      [T('Gross margin'), pct((cur.n - cur.k) / cur.n), I18N.p('Discount ', 'Desconto de ') + pct(1 - cur.n / cur.g) + I18N.p(' off list price', ' sobre a tabela') + (prev ? I18N.p(' · margin ', ' · margem de ') + pct((prev.n - prev.k) / prev.n) + I18N.p(' in ', ' em ') + L[1] : '')],
+      [T('Rep visits'), int(vc), vs(vc, vp)],
+      [T('Buying customers'), bc == null ? '–' : int(bc), vs(bc, bp)],
+      [T('Customers, no visit 60+ days'), int(calls.length), eur(calls.reduce(function (s, c) { return s + c[11]; }, 0)) + I18N.p(' bought in the last 12 months · on 30 Sep 2026', ' comprados nos últimos 12 meses · a 30 set 2026')],
+      [T('Overdue more than 90 days'), eur(od), I18N.p('of ', 'de ') + eur(open) + I18N.p(' open receivables · on 30 Sep 2026', ' em aberto · a 30 set 2026')]
     ];
     document.getElementById('kpis').innerHTML = tiles.map(function (t) { return '<div class="kpi"><span class="label">' + t[0] + '</span><span class="v">' + t[1] + '</span><span class="d">' + t[2] + '</span></div>'; }).join('');
   }
@@ -368,15 +596,15 @@ dialog.cust::backdrop { background: rgb(19 23 27 / .45); }
   // Q1: diverging bars, change on the comparison period (or revenue when the period has no comparison).
   function renderRegions() {
     var host = document.getElementById('region-chart'); host.innerHTML = '';
-    var L = PERIOD_LABEL[state.period], hasPrev = !!L[1];
+    var L = (I18N.pt() ? PL_PT : PERIOD_LABEL_EN)[state.period], hasPrev = !!L[1];
     var rows = D.meta.regions.map(function (reg) {
       var p = function (r) { return r[1] === reg; }, c = sales('cur', p), pr = sales('prev', p);
       var vc = visits('cur', p), vp = visits('prev', p);
       return { reg: reg, cur: c.n, prev: pr ? pr.n : null, v: hasPrev ? change(c.n, pr.n) : c.n, vc: vc, vp: vp };
     }).sort(function (a, b) { return a.v - b.v; });
-    document.getElementById('region-sub').textContent = hasPrev ? 'Net revenue ' + L[0] + ' against ' + L[1] + '.' : 'Net revenue ' + L[0] + '. Pick a shorter period to compare with a year earlier.';
+    document.getElementById('region-sub').textContent = hasPrev ? I18N.p('Net revenue ', 'Vendas líquidas de ') + L[0] + I18N.p(' against ', ' face a ') + L[1] + '.' : I18N.p('Net revenue ', 'Vendas líquidas de ') + L[0] + I18N.p('. Pick a shorter period to compare with a year earlier.', '. Escolha um período mais curto para comparar com o ano anterior.');
     var W = 480, rowH = 36, m = { l: 118, r: 64, t: 6, b: 6 }, H = m.t + m.b + rows.length * rowH;
-    var svg = el('svg', { viewBox: '0 0 ' + W + ' ' + H, role: 'img', 'aria-label': 'Revenue change by region' }, host);
+    var svg = el('svg', { viewBox: '0 0 ' + W + ' ' + H, role: 'img', 'aria-label': T('Revenue change by region') }, host);
     var vals = rows.map(function (r) { return r.v; });
     var lo = hasPrev ? Math.min(0, Math.min.apply(null, vals)) * 1.15 : 0, hi = Math.max(0, Math.max.apply(null, vals)) * 1.15 || 1;
     var X = function (v) { return m.l + (v - lo) / (hi - lo) * (W - m.l - m.r); };
@@ -389,9 +617,9 @@ dialog.cust::backdrop { background: rgb(19 23 27 / .45); }
       var label = hasPrev ? signed(r.v) : eur(r.v);
       txt(svg, neg ? x1 - 6 : x1 + 6, y + rowH / 2 + 4, label, { class: 'lbl', 'text-anchor': neg ? 'end' : 'start' });
       var hit = el('rect', { x: 0, y: y, width: W, height: rowH, fill: 'transparent' }, svg);
-      clickable(hit, function () { pickRegion(r.reg); }, 'Filter by ' + r.reg);
+      clickable(hit, function () { pickRegion(r.reg); }, I18N.p('Filter by ', 'Filtrar por ') + r.reg);
       hit.addEventListener('pointerenter', function () {
-        placeTip(tip, svg, W, H, (x0 + x1) / 2, y + 6, esc(r.reg) + '<br>' + L[0] + ': ' + eur(r.cur) + (hasPrev ? '<br>' + L[1] + ': ' + eur(r.prev) + '<br>Visits: ' + int(r.vc) + ' vs ' + int(r.vp) : '<br>Visits: ' + int(r.vc)));
+        placeTip(tip, svg, W, H, (x0 + x1) / 2, y + 6, esc(r.reg) + '<br>' + L[0] + ': ' + eur(r.cur) + (hasPrev ? '<br>' + L[1] + ': ' + eur(r.prev) + '<br>' + T('Visits') + ': ' + int(r.vc) + ' ' + I18N.p('vs', 'face a') + ' ' + int(r.vp) : '<br>' + T('Visits') + ': ' + int(r.vc)));
       });
       hit.addEventListener('pointerleave', function () { tip.hidden = true; });
     });
@@ -405,16 +633,16 @@ dialog.cust::backdrop { background: rgb(19 23 27 / .45); }
     D.sales.forEach(function (r) { if (inRegion(r[1]) && inRep(r[2]) && inCat(r[3])) rev[r[0]] = (rev[r[0]] || 0) + r[5]; });
     D.visits.forEach(function (r) { if (inRegion(r[1]) && inRep(r[2])) vis[r[0]] = (vis[r[0]] || 0) + r[3]; });
     var R = months.map(function (k) { return rev[k] || 0; }), V = months.map(function (k) { return vis[k] || 0; });
-    document.getElementById('monthly-title').textContent = 'Revenue and visits by month, ' + (state.rep || state.region || 'all regions') + (state.cat ? ', ' + state.cat : '');
-    document.getElementById('monthly-sub').textContent = 'Net revenue per month (line) and rep visits per month (bars), Jan 2024–Sep 2026.' + (state.cat ? ' Visits are not split by category, so the bars count all visits.' : '') + ((!state.region || state.region === 'Sul') && !state.rep ? ' The dashed line marks 1 Jan 2026, when REP12 (Sul) left.' : '');
+    document.getElementById('monthly-title').textContent = T('Revenue and visits by month') + ', ' + (state.rep || state.region || T('all regions')) + (state.cat ? ', ' + V(state.cat) : '');
+    document.getElementById('monthly-sub').textContent = I18N.p('Net revenue per month (line) and rep visits per month (bars), Jan 2024–Sep 2026.', 'Vendas líquidas por mês (linha) e visitas dos vendedores por mês (barras), jan 2024–set 2026.') + (state.cat ? I18N.p(' Visits are not split by category, so the bars count all visits.', ' As visitas não se dividem por categoria, por isso as barras contam todas as visitas.') : '') + ((!state.region || state.region === 'Sul') && !state.rep ? I18N.p(' The dashed line marks 1 Jan 2026, when REP12 (Sul) left.', ' A linha tracejada marca 1 jan 2026, quando o REP12 (Sul) saiu.') : '');
     var W = 480, H = 300, m = { l: 48, r: 12, t: 12, b: 26 }, split = 170, gap = 30;
-    var svg = el('svg', { viewBox: '0 0 ' + W + ' ' + H, role: 'img', 'aria-label': 'Monthly revenue and visits' }, host);
+    var svg = el('svg', { viewBox: '0 0 ' + W + ' ' + H, role: 'img', 'aria-label': T('Monthly revenue and visits') }, host);
     var bw = (W - m.l - m.r) / months.length, X = function (i) { return m.l + (i + 0.5) * bw; };
     var w = win('cur'), i0 = months.indexOf(w[0]), i1 = months.indexOf(w[1]);
     el('rect', { x: m.l + i0 * bw, y: m.t, width: (i1 - i0 + 1) * bw, height: H - m.t - m.b, fill: css('--signal-soft') }, svg);
     var maxR = Math.max.apply(null, R) || 1, stepR = niceStep(maxR), topR = Math.ceil(maxR / stepR) * stepR;
     var YR = function (v) { return split - v / topR * (split - m.t); };
-    for (var v = 0; v <= topR + 1e-9; v += stepR) { el('line', { x1: m.l, x2: W - m.r, y1: YR(v), y2: YR(v), stroke: css('--grid'), 'stroke-width': 1 }, svg); txt(svg, m.l - 8, YR(v) + 4, v >= 1e6 ? '€' + +(v / 1e6).toFixed(1) + 'M' : eur(v), { 'text-anchor': 'end' }); }
+    for (var v = 0; v <= topR + 1e-9; v += stepR) { el('line', { x1: m.l, x2: W - m.r, y1: YR(v), y2: YR(v), stroke: css('--grid'), 'stroke-width': 1 }, svg); txt(svg, m.l - 8, YR(v) + 4, v >= 1e6 ? (I18N.pt() ? N(+(v / 1e6).toFixed(1)) + '\u00a0M€' : '€' + +(v / 1e6).toFixed(1) + 'M') : eur(v), { 'text-anchor': 'end' }); }
     var maxV = Math.max.apply(null, V) || 1, stepV = niceStep(maxV, 2), topV = Math.ceil(maxV / stepV) * stepV, vTop = split + gap, vBot = H - m.b;
     var YV = function (v) { return vBot - v / topV * (vBot - vTop); };
     for (var u = 0; u <= topV + 1e-9; u += stepV) { el('line', { x1: m.l, x2: W - m.r, y1: YV(u), y2: YV(u), stroke: css('--grid'), 'stroke-width': 1 }, svg); txt(svg, m.l - 8, YV(u) + 4, int(u), { 'text-anchor': 'end' }); }
@@ -425,7 +653,7 @@ dialog.cust::backdrop { background: rgb(19 23 27 / .45); }
     if ((!state.region || state.region === 'Sul') && !state.rep) {
       var j = months.indexOf('2026-01'), xl = m.l + j * bw;
       el('line', { x1: xl, x2: xl, y1: m.t, y2: vBot, stroke: css('--ink'), 'stroke-width': 1, 'stroke-dasharray': '3 3' }, svg);
-      txt(svg, xl - 4, m.t + 10, 'REP12 leaves', { 'text-anchor': 'end', class: 'lbl' });
+      txt(svg, xl - 4, m.t + 10, T('REP12 leaves'), { 'text-anchor': 'end', class: 'lbl' });
     }
     var cross = el('line', { y1: m.t, y2: vBot, stroke: css('--muted'), 'stroke-width': 1, 'stroke-dasharray': '3 3', visibility: 'hidden' }, svg);
     var dot = el('circle', { r: 4, fill: css('--s1'), stroke: css('--sheet'), 'stroke-width': 2, visibility: 'hidden' }, svg);
@@ -437,7 +665,7 @@ dialog.cust::backdrop { background: rgb(19 23 27 / .45); }
       cross.setAttribute('x1', X(i)); cross.setAttribute('x2', X(i)); cross.setAttribute('visibility', 'visible');
       dot.setAttribute('cx', X(i)); dot.setAttribute('cy', YR(R[i])); dot.setAttribute('visibility', 'visible');
       var py = months.indexOf((Number(months[i].slice(0, 4)) - 1) + months[i].slice(4));
-      placeTip(tip, svg, W, H, X(i), YR(R[i]), ymLabel(months[i]) + '<br>Net revenue: ' + eur(R[i]) + (py >= 0 ? ' (' + signed(change(R[i], R[py])) + ' on a year earlier)' : '') + '<br>Visits: ' + int(V[i]));
+      placeTip(tip, svg, W, H, X(i), YR(R[i]), ymLabel(months[i]) + '<br>' + T('Net revenue') + ': ' + eur(R[i]) + (py >= 0 ? ' (' + signed(change(R[i], R[py])) + I18N.p(' on a year earlier)', ' face ao ano anterior)') : '') + '<br>' + T('Visits') + ': ' + int(V[i]));
     });
     hit.addEventListener('pointerleave', function () { cross.setAttribute('visibility', 'hidden'); dot.setAttribute('visibility', 'hidden'); tip.hidden = true; });
   }
@@ -453,26 +681,26 @@ dialog.cust::backdrop { background: rgb(19 23 27 / .45); }
   function renderScatter(reps) {
     var host = document.getElementById('scatter-chart'); host.innerHTML = '';
     var W = 480, H = 280, m = { l: 44, r: 16, t: 14, b: 34 };
-    var svg = el('svg', { viewBox: '0 0 ' + W + ' ' + H, role: 'img', 'aria-label': 'Discount and gross margin by rep' }, host);
+    var svg = el('svg', { viewBox: '0 0 ' + W + ' ' + H, role: 'img', 'aria-label': T('Discount and gross margin by rep') }, host);
     var xs = reps.map(function (r) { return r.disc; }), ys = reps.map(function (r) { return r.margin; });
     var x0 = Math.floor((Math.min.apply(null, xs) - 0.01) * 50) / 50, x1 = Math.ceil((Math.max.apply(null, xs) + 0.01) * 50) / 50;
     var y0 = Math.floor((Math.min.apply(null, ys) - 0.01) * 50) / 50, y1 = Math.ceil((Math.max.apply(null, ys) + 0.01) * 50) / 50;
     var X = function (v) { return m.l + (v - x0) / (x1 - x0) * (W - m.l - m.r); }, Y = function (v) { return H - m.b - (v - y0) / (y1 - y0) * (H - m.t - m.b); };
     for (var a = x0; a <= x1 + 1e-9; a += 0.02) { el('line', { x1: X(a), x2: X(a), y1: m.t, y2: H - m.b, stroke: css('--grid'), 'stroke-width': 1 }, svg); txt(svg, X(a), H - m.b + 14, Math.round(a * 100) + '%', { 'text-anchor': 'middle' }); }
     for (var b = y0; b <= y1 + 1e-9; b += 0.02) { el('line', { x1: m.l, x2: W - m.r, y1: Y(b), y2: Y(b), stroke: css('--grid'), 'stroke-width': 1 }, svg); txt(svg, m.l - 8, Y(b) + 4, Math.round(b * 100) + '%', { 'text-anchor': 'end' }); }
-    txt(svg, W - m.r, H - 4, 'Discount off list price →', { 'text-anchor': 'end' });
-    txt(svg, m.l + 4, m.t + 2, '↑ Gross margin', {});
+    txt(svg, W - m.r, H - 4, T('Discount off list price →'), { 'text-anchor': 'end' });
+    txt(svg, m.l + 4, m.t + 2, T('↑ Gross margin'), {});
     var maxN = Math.max.apply(null, reps.map(function (r) { return r.n; }));
     var tip = tipFor(host);
     reps.slice().sort(function (p, q) { return q.n - p.n; }).forEach(function (r) {
       var on = inRegion(r.region) && inRep(r.id), out = r.disc > 0.1;
       var c = el('circle', { cx: X(r.disc), cy: Y(r.margin), r: 5 + 11 * Math.sqrt(r.n / maxN), fill: css(out ? '--pt' : '--s1'), 'fill-opacity': on ? 0.75 : 0.18, stroke: css('--sheet'), 'stroke-width': 1.5 }, svg);
       if (out || ((state.region || state.rep) && on)) txt(svg, X(r.disc) + (out ? -16 : 14), Y(r.margin) + 4, r.id, { class: 'lbl', 'text-anchor': out ? 'end' : 'start' });
-      c.addEventListener('pointerenter', function () { placeTip(tip, svg, W, H, X(r.disc), Y(r.margin) - 8, esc(r.name) + ' (' + r.id + ') · ' + esc(shortRegion(r.region)) + '<br>Discount ' + pct(r.disc) + ' · margin ' + pct(r.margin) + '<br>Net revenue ' + eur(r.n)); });
+      c.addEventListener('pointerenter', function () { placeTip(tip, svg, W, H, X(r.disc), Y(r.margin) - 8, esc(rname(r.name)) + ' (' + r.id + ') · ' + esc(shortRegion(r.region)) + '<br>' + T('Discount') + ' ' + pct(r.disc) + ' · ' + I18N.p('margin', 'margem') + ' ' + pct(r.margin) + '<br>' + T('Net revenue') + ' ' + eur(r.n)); });
       c.addEventListener('pointerleave', function () { tip.hidden = true; });
-      clickable(c, function () { pickRep(r.id); }, 'Filter by ' + r.id);
+      clickable(c, function () { pickRep(r.id); }, I18N.p('Filter by ', 'Filtrar por ') + r.id);
     });
-    document.getElementById('scatter-sub').textContent = 'Each circle is a rep, sized by net revenue, ' + PERIOD_LABEL[state.period][0] + (state.cat ? ', ' + state.cat + ' only' : '') + '.' + (state.rep ? ' Other reps are faded.' : state.region ? ' Reps outside ' + state.region + ' are faded.' : '');
+    document.getElementById('scatter-sub').textContent = I18N.p('Each circle is a rep, sized by net revenue, ', 'Cada círculo é um vendedor, com tamanho proporcional às vendas líquidas, ') + (I18N.pt() ? PL_PT : PERIOD_LABEL_EN)[state.period][0] + (state.cat ? (I18N.pt() ? ', só ' + V(state.cat) : ', ' + state.cat + ' only') : '') + '.' + (state.rep ? I18N.p(' Other reps are faded.', ' Os outros vendedores ficam esbatidos.') : state.region ? I18N.p(' Reps outside ' + state.region + ' are faded.', ' Os vendedores fora de ' + state.region + ' ficam esbatidos.') : '');
   }
 
   function renderReps(reps) {
@@ -481,10 +709,10 @@ dialog.cust::backdrop { background: rgb(19 23 27 / .45); }
     var others = reps.filter(function (r) { return r.id !== top.id; }), og = 0, on = 0, ok = 0;
     others.forEach(function (r) { og += r.g; on += r.n; ok += r.k; });
     var peerDisc = 1 - on / og, extra = top.g * (top.disc - peerDisc);
-    document.getElementById('reps-sub').textContent = top.id + ' discounts ' + pct(top.disc) + ' against ' + pct(peerDisc) + ' for the other reps; margin ' + pct(top.margin) + ' against ' + pct((on - ok) / on) + '. Extra discount at ' + top.id + "'s list-price sales: " + eur(extra) + ', ' + PERIOD_LABEL[state.period][0] + '.';
-    var head = '<thead><tr><th>Rep</th><th class="l">Region</th><th>Net revenue</th><th>Discount</th><th>Margin</th><th>Per customer</th></tr></thead>';
+    document.getElementById('reps-sub').textContent = I18N.pt() ? 'O ' + top.id + ' concede ' + pct(top.disc) + ' de desconto, contra ' + pct(peerDisc) + ' dos restantes vendedores; margem de ' + pct(top.margin) + ' contra ' + pct((on - ok) / on) + '. Desconto a mais sobre as vendas a preço de tabela do ' + top.id + ': ' + eur(extra) + ', ' + PL_PT[state.period][0] + '.' : top.id + ' discounts ' + pct(top.disc) + ' against ' + pct(peerDisc) + ' for the other reps; margin ' + pct(top.margin) + ' against ' + pct((on - ok) / on) + '. Extra discount at ' + top.id + "'s list-price sales: " + eur(extra) + ', ' + PERIOD_LABEL_EN[state.period][0] + '.';
+    var head = '<thead><tr><th>' + T('Rep') + '</th><th class="l">' + T('Region') + '</th><th>' + T('Net revenue') + '</th><th>' + T('Discount') + '</th><th>' + T('Margin') + '</th><th>' + T('Per customer') + '</th></tr></thead>';
     var body = shown.map(function (r) {
-      return '<tr class="hit-x' + (r.id === top.id ? ' hl' : '') + (r.id === state.rep ? ' on' : '') + '" tabindex="0" data-rep="' + r.id + '"><td>' + r.id + (r.left ? ' <span class="note">left ' + r.left.slice(0, 7) + '</span>' : '') + '</td><td class="l">' + esc(shortRegion(r.region)) + '</td><td>' + eur(r.n) + '</td><td>' + pct(r.disc) + '</td><td>' + pct(r.margin) + '</td><td>' + (r.rpc == null ? '–' : eur(r.rpc)) + '</td></tr>';
+      return '<tr class="hit-x' + (r.id === top.id ? ' hl' : '') + (r.id === state.rep ? ' on' : '') + '" tabindex="0" data-rep="' + r.id + '"><td>' + r.id + (r.left ? ' <span class="note">' + I18N.p('left ', 'saiu ') + r.left.slice(0, 7) + '</span>' : '') + '</td><td class="l">' + esc(shortRegion(r.region)) + '</td><td>' + eur(r.n) + '</td><td>' + pct(r.disc) + '</td><td>' + pct(r.margin) + '</td><td>' + (r.rpc == null ? '–' : eur(r.rpc)) + '</td></tr>';
     }).join('');
     document.getElementById('reps-table').innerHTML = head + '<tbody>' + body + '</tbody>';
     rowClicks('reps-table', function (tr) { pickRep(tr.dataset.rep); });
@@ -494,12 +722,12 @@ dialog.cust::backdrop { background: rgb(19 23 27 / .45); }
   function renderCalls() {
     var rows = D.call.filter(function (c) { return inRegion(c[4]) && inRep(c[6]) && inSeg(c[3]) && inBand(c[8]); });
     var tot = rows.reduce(function (s, c) { return s + c[11]; }, 0);
-    document.getElementById('call-sub').textContent = rows.length + ' customers in ' + selLabel() + ' with no visit for more than 60 days on 30 Sep 2026; together they bought ' + eur(tot) + ' in the last 12 months. Top 12 by that revenue; Days = days since the last visit.';
-    var head = '<thead><tr><th>Customer</th>' + (state.region ? '' : '<th class="l">Region</th>') + '<th class="l">Rep</th><th>Days</th><th>12 m</th></tr></thead>';
+    document.getElementById('call-sub').textContent = I18N.pt() ? rows.length + ' clientes em ' + selLabel() + ' sem visita há mais de 60 dias a 30 set 2026; juntos compraram ' + eur(tot) + ' nos últimos 12 meses. Os 12 maiores por esse valor; Dias = dias desde a última visita.' : rows.length + ' customers in ' + selLabel() + ' with no visit for more than 60 days on 30 Sep 2026; together they bought ' + eur(tot) + ' in the last 12 months. Top 12 by that revenue; Days = days since the last visit.';
+    var head = '<thead><tr><th>' + T('Customer') + '</th>' + (state.region ? '' : '<th class="l">' + T('Region') + '</th>') + '<th class="l">' + T('Rep') + '</th><th>' + T('Days') + '</th><th>12 m</th></tr></thead>';
     var body = rows.slice(0, 12).map(function (c) {
-      return '<tr tabindex="0" data-cid="' + esc(c[1]) + '" aria-label="Open the card for ' + esc(c[2]) + '"><td>' + esc(c[2]) + '<br><span class="note">' + esc(c[3]) + '</span></td>' + (state.region ? '' : '<td class="l">' + esc(shortRegion(c[4])) + '</td>') + '<td class="l">' + c[6] + '</td><td>' + c[8] + '</td><td>' + eur(c[11]) + '</td></tr>';
+      return '<tr tabindex="0" data-cid="' + esc(c[1]) + '" aria-label="' + I18N.p('Open the card for ', 'Abrir a ficha de ') + esc(cname(c[2])) + '"><td>' + esc(cname(c[2])) + '<br><span class="note">' + esc(V(c[3])) + '</span></td>' + (state.region ? '' : '<td class="l">' + esc(shortRegion(c[4])) + '</td>') + '<td class="l">' + c[6] + '</td><td>' + c[8] + '</td><td>' + eur(c[11]) + '</td></tr>';
     }).join('');
-    document.getElementById('call-table').innerHTML = rows.length ? head + '<tbody>' + body + '</tbody>' : '<tbody><tr><td class="empty">No customers in this selection.</td></tr></tbody>';
+    document.getElementById('call-table').innerHTML = rows.length ? head + '<tbody>' + body + '</tbody>' : '<tbody><tr><td class="empty">' + T('No customers in this selection.') + '</td></tr></tbody>';
     document.querySelectorAll('#call-table tr[data-cid]').forEach(function (tr) {
       var open = function () { openCustomer(tr.dataset.cid); };
       tr.addEventListener('click', open);
@@ -511,9 +739,9 @@ dialog.cust::backdrop { background: rgb(19 23 27 / .45); }
     var host = document.getElementById('recency-chart'); host.innerHTML = '';
     var bands = [0, 30, 60, 90, 120, 150, 180], cnt = bands.map(function () { return 0; }), n = 0;
     D.recency.forEach(function (r) { if (!inRegion(r[0])) return; var i = bands.indexOf(r[1]); if (i >= 0) { cnt[i] += r[2]; n += r[2]; } });
-    document.getElementById('recency-sub').textContent = 'Customers by days since their last visit on 30 Sep 2026, ' + (state.region || 'all regions') + ' (' + int(n) + ' customers). Orange bars are past the 60-day line; click one to list those customers.';
+    document.getElementById('recency-sub').textContent = I18N.pt() ? 'Clientes por dias desde a última visita a 30 set 2026, ' + (state.region || 'todas as regiões') + ' (' + int(n) + ' clientes). As barras a magenta passaram a linha dos 60 dias; clique numa para listar esses clientes.' : 'Customers by days since their last visit on 30 Sep 2026, ' + (state.region || 'all regions') + ' (' + int(n) + ' customers). Magenta bars are past the 60-day line; click one to list those customers.';
     var W = 480, H = 240, m = { l: 40, r: 8, t: 18, b: 26 };
-    var svg = el('svg', { viewBox: '0 0 ' + W + ' ' + H, role: 'img', 'aria-label': 'Customers by days since last visit' }, host);
+    var svg = el('svg', { viewBox: '0 0 ' + W + ' ' + H, role: 'img', 'aria-label': T('Customers by days since last visit') }, host);
     var maxV = Math.max.apply(null, cnt) || 1, step = niceStep(maxV), top = Math.ceil(maxV / step) * step;
     var Y = function (v) { return H - m.b - v / top * (H - m.t - m.b); }, bw = (W - m.l - m.r) / bands.length;
     for (var v = 0; v <= top + 1e-9; v += step) { el('line', { x1: m.l, x2: W - m.r, y1: Y(v), y2: Y(v), stroke: css('--grid'), 'stroke-width': 1 }, svg); txt(svg, m.l - 8, Y(v) + 4, int(v), { 'text-anchor': 'end' }); }
@@ -524,8 +752,8 @@ dialog.cust::backdrop { background: rgb(19 23 27 / .45); }
       txt(svg, x + bw / 2, H - 8, label, { 'text-anchor': 'middle' });
       txt(svg, x + bw / 2, Y(cnt[i]) - 6, int(cnt[i]), { 'text-anchor': 'middle', class: 'lbl' });
       var hit = el('rect', { x: x, y: m.t, width: bw, height: H - m.t - m.b, fill: 'transparent' }, svg);
-      if (b >= 60) clickable(hit, function () { pickBand(b); }, 'Show ' + label + ' days in the call list');
-      hit.addEventListener('pointerenter', function () { placeTip(tip, svg, W, H, x + bw / 2, Y(cnt[i]), label + ' days since last visit<br>' + int(cnt[i]) + ' customers (' + pct(cnt[i] / n, 0) + ')'); });
+      if (b >= 60) clickable(hit, function () { pickBand(b); }, I18N.p('Show ' + label + ' days in the call list', 'Mostrar ' + label + ' dias na lista de contactos'));
+      hit.addEventListener('pointerenter', function () { placeTip(tip, svg, W, H, x + bw / 2, Y(cnt[i]), label + I18N.p(' days since last visit<br>', ' dias desde a última visita<br>') + int(cnt[i]) + I18N.p(' customers (', ' clientes (') + pct(cnt[i] / n, 0) + ')'); });
       hit.addEventListener('pointerleave', function () { tip.hidden = true; });
     });
   }
@@ -536,32 +764,32 @@ dialog.cust::backdrop { background: rgb(19 23 27 / .45); }
     var segs = {}, total = 0;
     D.aging.forEach(function (r) { if (!inRegion(r[0])) return; var s = segs[r[1]] = segs[r[1]] || { seg: r[1], b: [0, 0, 0, 0, 0], t: 0 }; var i = BUCKETS.indexOf(r[2]); s.b[i] += r[4]; s.t += r[4]; total += r[4]; });
     var rows = Object.keys(segs).map(function (k) { return segs[k]; }).sort(function (a, b) { return b.b[4] - a.b[4]; });
-    document.getElementById('aging-sub').textContent = 'Unpaid invoices on 30 Sep 2026 by days past the due date, ' + (state.region || 'all regions') + ': ' + eur(total) + ' open, amounts with VAT.';
-    document.getElementById('aging-legend').innerHTML = BUCKETS.map(function (b, i) { return '<span><i class="sq" style="background:var(' + BUCKET_COLOR[i] + ')"></i>' + (b === 'Not due' ? b : b + ' days') + '</span>'; }).join('');
+    document.getElementById('aging-sub').textContent = I18N.p('Unpaid invoices on 30 Sep 2026 by days past the due date, ', 'Faturas por pagar a 30 set 2026 por dias após o vencimento, ') + (state.region || T('all regions')) + ': ' + eur(total) + I18N.p(' open, amounts with VAT.', ' em aberto, valores com IVA.');
+    document.getElementById('aging-legend').innerHTML = BUCKETS.map(function (b, i) { return '<span><i class="sq" style="background:var(' + BUCKET_COLOR[i] + ')"></i>' + (b === 'Not due' ? T(b) : b + ' ' + I18N.p('days', 'dias')) + '</span>'; }).join('');
     var W = 480, rowH = 40, m = { l: 118, r: 52, t: 4, b: 4 }, H = m.t + m.b + rows.length * rowH;
-    var svg = el('svg', { viewBox: '0 0 ' + W + ' ' + H, role: 'img', 'aria-label': 'Open receivables by segment and aging bucket' }, host);
+    var svg = el('svg', { viewBox: '0 0 ' + W + ' ' + H, role: 'img', 'aria-label': T('Open receivables by segment and aging bucket') }, host);
     var maxT = Math.max.apply(null, rows.map(function (r) { return r.t; })) || 1;
     var X = function (v) { return v / maxT * (W - m.l - m.r); };
     var tip = tipFor(host);
     rows.forEach(function (r, i) {
       var y = m.t + i * rowH, x = m.l;
-      txt(svg, 8, y + rowH / 2 + 4, r.seg, { class: 'lbl' });
+      txt(svg, 8, y + rowH / 2 + 4, V(r.seg), { class: 'lbl' });
       r.b.forEach(function (v, k) { if (v <= 0) return; el('rect', { x: x, y: y + 9, width: Math.max(1, X(v)), height: rowH - 18, fill: css(BUCKET_COLOR[k]), opacity: state.seg && state.seg !== r.seg ? 0.3 : 1 }, svg); x += X(v); });
       txt(svg, x + 6, y + rowH / 2 + 4, eur(r.t), { class: 'lbl' });
       var hit = el('rect', { x: 0, y: y, width: W, height: rowH, fill: 'transparent' }, svg);
-      clickable(hit, function () { pickSeg(r.seg); }, 'Filter by ' + r.seg);
-      hit.addEventListener('pointerenter', function () { placeTip(tip, svg, W, H, m.l + X(r.t) / 2, y + 6, esc(r.seg) + BUCKETS.map(function (b, k) { return '<br>' + b + ': ' + eur(r.b[k]); }).join('')); });
+      clickable(hit, function () { pickSeg(r.seg); }, I18N.p('Filter by ', 'Filtrar por ') + V(r.seg));
+      hit.addEventListener('pointerenter', function () { placeTip(tip, svg, W, H, m.l + X(r.t) / 2, y + 6, esc(V(r.seg)) + BUCKETS.map(function (b, k) { return '<br>' + (b === 'Not due' ? T(b) : b + ' ' + I18N.p('days', 'dias')) + ': ' + eur(r.b[k]); }).join('')); });
       hit.addEventListener('pointerleave', function () { tip.hidden = true; });
     });
-    if (!rows.length) host.innerHTML = '<p class="empty">No open receivables in this selection.</p>';
+    if (!rows.length) host.innerHTML = '<p class="empty">' + T('No open receivables in this selection.') + '</p>';
   }
 
   function renderPay() {
-    var segs = {}, T = { billed: 0, od: 0 };
-    D.pay.forEach(function (r) { if (!inRegion(r[0])) return; var s = segs[r[1]] = segs[r[1]] || { seg: r[1], billed: 0, open: 0, od: 0, late: 0, paid: 0 }; s.billed += r[2]; s.open += r[3]; s.od += r[4]; s.late += r[5]; s.paid += r[6]; T.billed += r[2]; T.od += r[4]; });
+    var segs = {}, TT = { billed: 0, od: 0 };
+    D.pay.forEach(function (r) { if (!inRegion(r[0])) return; var s = segs[r[1]] = segs[r[1]] || { seg: r[1], billed: 0, open: 0, od: 0, late: 0, paid: 0 }; s.billed += r[2]; s.open += r[3]; s.od += r[4]; s.late += r[5]; s.paid += r[6]; TT.billed += r[2]; TT.od += r[4]; });
     var rows = Object.keys(segs).map(function (k) { return segs[k]; }).sort(function (a, b) { return b.od - a.od; });
-    var head = '<thead><tr><th>Segment</th><th>Billing</th><th>Open</th><th>90+ days</th><th>Share of 90+</th><th>Days late</th></tr></thead>';
-    var body = rows.map(function (s, i) { return '<tr class="hit-x' + (i === 0 ? ' hl' : '') + (s.seg === state.seg ? ' on' : '') + '" tabindex="0" data-seg="' + esc(s.seg) + '"><td>' + esc(s.seg) + '</td><td>' + pct(s.billed / T.billed, 0) + '</td><td>' + eur(s.open) + '</td><td>' + eur(s.od) + '</td><td>' + (T.od ? pct(s.od / T.od, 0) : '–') + '</td><td>' + (s.paid ? (s.late / s.paid).toFixed(1) : '–') + '</td></tr>'; }).join('');
+    var head = '<thead><tr>' + ['Segment', 'Billing', 'Open', '90+ days', 'Share of 90+', 'Days late'].map(function (h) { return '<th>' + T(h) + '</th>'; }).join('') + '</tr></thead>';
+    var body = rows.map(function (s, i) { return '<tr class="hit-x' + (i === 0 ? ' hl' : '') + (s.seg === state.seg ? ' on' : '') + '" tabindex="0" data-seg="' + esc(s.seg) + '"><td>' + esc(V(s.seg)) + '</td><td>' + pct(s.billed / TT.billed, 0) + '</td><td>' + eur(s.open) + '</td><td>' + eur(s.od) + '</td><td>' + (TT.od ? pct(s.od / TT.od, 0) : '–') + '</td><td>' + (s.paid ? N((s.late / s.paid).toFixed(1)) : '–') + '</td></tr>'; }).join('');
     document.getElementById('pay-table').innerHTML = head + '<tbody>' + body + '</tbody>';
     rowClicks('pay-table', function (tr) { pickSeg(tr.dataset.seg); });
   }
@@ -575,16 +803,16 @@ dialog.cust::backdrop { background: rgb(19 23 27 / .45); }
   function renderSeason() {
     var host = document.getElementById('season-chart'); host.innerHTML = '';
     var cats = seasonData();
-    document.getElementById('season-legend').innerHTML = state.cat ? '<span><i style="background:var(' + (state.cat === 'Parasiticides' ? '--s2' : '--s1') + ')"></i>' + esc(state.cat) + '</span><span><i style="background:var(--muted)"></i>Other categories</span>' : '<span><i style="background:var(--s1)"></i>Vaccines</span><span><i style="background:var(--s2)"></i>Parasiticides</span><span><i style="background:var(--muted)"></i>Other categories</span>';
-    document.getElementById('season-sub').textContent = 'Average monthly net revenue ÷ the category\'s average month, 2024 and 2025, ' + selLabel(true) + '. 1.0 = an average month.' + (state.cat ? '' : ' Click a line to filter by category.');
+    document.getElementById('season-legend').innerHTML = state.cat ? '<span><i style="background:var(' + (state.cat === 'Parasiticides' ? '--s2' : '--s1') + ')"></i>' + esc(V(state.cat)) + '</span><span><i style="background:var(--muted)"></i>' + T('Other categories') + '</span>' : '<span><i style="background:var(--s1)"></i>' + T('Vaccines') + '</span><span><i style="background:var(--s2)"></i>' + T('Parasiticides') + '</span><span><i style="background:var(--muted)"></i>' + T('Other categories') + '</span>';
+    document.getElementById('season-sub').textContent = I18N.p('Average monthly net revenue ÷ the category\'s average month, 2024 and 2025, ', 'Vendas líquidas médias de cada mês ÷ mês médio da categoria, 2024 e 2025, ') + selLabel(true) + I18N.p('. 1.0 = an average month.', '. 1,0 = um mês médio.') + (state.cat ? '' : I18N.p(' Click a line to filter by category.', ' Clique numa linha para filtrar pela categoria.'));
     var W = 480, H = 260, m = { l: 36, r: 16, t: 12, b: 26 };
-    var svg = el('svg', { viewBox: '0 0 ' + W + ' ' + H, role: 'img', 'aria-label': 'Seasonal index by category and month' }, host);
+    var svg = el('svg', { viewBox: '0 0 ' + W + ' ' + H, role: 'img', 'aria-label': T('Seasonal index by category and month') }, host);
     var all = []; cats.forEach(function (c) { all = all.concat(c.idx); });
     var lo = Math.min(0.5, Math.min.apply(null, all)), hi = Math.max(1.5, Math.max.apply(null, all));
     var step = 0.25, minV = Math.floor(lo / step) * step, maxV = Math.ceil(hi / step) * step;
     var X = function (i) { return m.l + i / 11 * (W - m.l - m.r); }, Y = function (v) { return H - m.b - (v - minV) / (maxV - minV) * (H - m.t - m.b); };
-    for (var v = minV; v <= maxV + 1e-9; v += step) { var one = Math.abs(v - 1) < 1e-9; el('line', { x1: m.l, x2: W - m.r, y1: Y(v), y2: Y(v), stroke: css(one ? '--muted' : '--grid'), 'stroke-width': 1, 'stroke-dasharray': one ? '2 3' : 'none' }, svg); if (Math.abs(v * 2 - Math.round(v * 2)) < 1e-9) txt(svg, m.l - 8, Y(v) + 4, v.toFixed(1), { 'text-anchor': 'end' }); }
-    MONTHS.forEach(function (mo, i) { txt(svg, X(i), H - 8, mo, { 'text-anchor': 'middle' }); });
+    for (var v = minV; v <= maxV + 1e-9; v += step) { var one = Math.abs(v - 1) < 1e-9; el('line', { x1: m.l, x2: W - m.r, y1: Y(v), y2: Y(v), stroke: css(one ? '--muted' : '--grid'), 'stroke-width': 1, 'stroke-dasharray': one ? '2 3' : 'none' }, svg); if (Math.abs(v * 2 - Math.round(v * 2)) < 1e-9) txt(svg, m.l - 8, Y(v) + 4, N(v.toFixed(1)), { 'text-anchor': 'end' }); }
+    MON().forEach(function (mo, i) { txt(svg, X(i), H - 8, mo, { 'text-anchor': 'middle' }); });
     var color = function (c) { if (state.cat) return c === state.cat ? (c === 'Parasiticides' ? '--s2' : '--s1') : '--muted'; return c === 'Vaccines' ? '--s1' : c === 'Parasiticides' ? '--s2' : '--muted'; };
     cats.sort(function (a, b) { return (color(a.cat) === '--muted' ? 0 : 1) - (color(b.cat) === '--muted' ? 0 : 1); }).forEach(function (c) {
       var hl = color(c.cat) !== '--muted';
@@ -598,33 +826,33 @@ dialog.cust::backdrop { background: rgb(19 23 27 / .45); }
       var b = svg.getBoundingClientRect(), px = (evt.clientX - b.left) / b.width * W, i = Math.max(0, Math.min(11, Math.round((px - m.l) / (W - m.l - m.r) * 11)));
       cross.setAttribute('x1', X(i)); cross.setAttribute('x2', X(i)); cross.setAttribute('visibility', 'visible');
       var top = Math.max.apply(null, cats.map(function (c) { return c.idx[i]; }));
-      placeTip(tip, svg, W, H, X(i), Y(top), MONTHS[i] + cats.slice().sort(function (p, q) { return q.idx[i] - p.idx[i]; }).map(function (c) { return '<br>' + esc(c.cat) + ': ' + c.idx[i].toFixed(2); }).join(''));
+      placeTip(tip, svg, W, H, X(i), Y(top), MON()[i] + cats.slice().sort(function (p, q) { return q.idx[i] - p.idx[i]; }).map(function (c) { return '<br>' + esc(V(c.cat)) + ': ' + N(c.idx[i].toFixed(2)); }).join(''));
     });
     hit.addEventListener('pointerleave', function () { cross.setAttribute('visibility', 'hidden'); tip.hidden = true; });
     // wide transparent strokes over each line, above the hover rect, so a line can be clicked
-    cats.forEach(function (c) { var lp = el('path', { d: linePath(c), fill: 'none', stroke: 'transparent', 'stroke-width': 12, 'pointer-events': 'stroke' }, svg); clickable(lp, function () { pickCat(c.cat); }, 'Filter by ' + c.cat); lp.addEventListener('pointermove', function (evt) { hit.dispatchEvent(new PointerEvent('pointermove', { clientX: evt.clientX, clientY: evt.clientY })); }); });
+    cats.forEach(function (c) { var lp = el('path', { d: linePath(c), fill: 'none', stroke: 'transparent', 'stroke-width': 12, 'pointer-events': 'stroke' }, svg); clickable(lp, function () { pickCat(c.cat); }, I18N.p('Filter by ', 'Filtrar por ') + V(c.cat)); lp.addEventListener('pointermove', function (evt) { hit.dispatchEvent(new PointerEvent('pointermove', { clientX: evt.clientX, clientY: evt.clientY })); }); });
     var avg = function (a, ms) { return ms.reduce(function (s, k) { return s + a[k]; }, 0) / ms.length; };
     var rows = cats.map(function (c) { var w = avg(c.avg, [11, 0, 1]); return { cat: c.cat, sp: avg(c.avg, [2, 3, 4]) / w, su: avg(c.avg, [5, 6, 7]) / w }; }).sort(function (a, b) { return Math.max(b.sp, b.su) - Math.max(a.sp, a.su); });
-    document.getElementById('season-table').innerHTML = '<thead><tr><th>Category</th><th>Spring (Mar–May)</th><th>Summer (Jun–Aug)</th></tr></thead><tbody>' + rows.map(function (r) {
-      return '<tr class="hit-x' + (r.cat === state.cat ? ' on' : '') + '" tabindex="0" data-cat="' + esc(r.cat) + '"><td>' + esc(r.cat) + '</td><td' + (r.sp > 1.5 ? ' class="hl"' : '') + '>' + r.sp.toFixed(1) + '×</td><td' + (r.su > 1.5 ? ' class="hl"' : '') + '>' + r.su.toFixed(1) + '×</td></tr>';
+    document.getElementById('season-table').innerHTML = '<thead><tr><th>' + T('Category') + '</th><th>' + T('Spring (Mar–May)') + '</th><th>' + T('Summer (Jun–Aug)') + '</th></tr></thead><tbody>' + rows.map(function (r) {
+      return '<tr class="hit-x' + (r.cat === state.cat ? ' on' : '') + '" tabindex="0" data-cat="' + esc(r.cat) + '"><td>' + esc(V(r.cat)) + '</td><td' + (r.sp > 1.5 ? ' class="hl"' : '') + '>' + N(r.sp.toFixed(1)) + '×</td><td' + (r.su > 1.5 ? ' class="hl"' : '') + '>' + N(r.su.toFixed(1)) + '×</td></tr>';
     }).join('') + '</tbody>';
     rowClicks('season-table', function (tr) { pickCat(tr.dataset.cat); });
   }
 
   // Live headline: one sentence that answers the page for the current filters
   function renderHeadline() {
-    var L = PERIOD_LABEL[state.period], out;
+    var L = (I18N.pt() ? PL_PT : PERIOD_LABEL_EN)[state.period], out;
     var cur = sales('cur', regionPred), prev = sales('prev', regionPred);
     var calls = D.call.filter(function (c) { return inRegion(c[4]); });
     if (!L[1]) {
-      out = 'Net revenue ' + eur(cur.n) + ' in ' + L[0] + (state.region ? ' in ' + state.region : '') + '. ' + int(calls.length) + ' customers have had no visit for 60+ days.';
+      out = I18N.pt() ? 'Vendas líquidas de ' + eur(cur.n) + ' em ' + L[0] + (state.region ? ' no ' + state.region : '') + '. ' + int(calls.length) + ' clientes estão há mais de 60 dias sem visita.' : 'Net revenue ' + eur(cur.n) + ' in ' + L[0] + (state.region ? ' in ' + state.region : '') + '. ' + int(calls.length) + ' customers have had no visit for 60+ days.';
     } else if (state.region) {
       var vc = visits('cur', regionPred), vp = visits('prev', regionPred);
-      out = state.region + ': revenue ' + signed(change(cur.n, prev.n)) + ' and visits ' + signed(change(vc, vp)) + ' on ' + L[1] + '. ' + int(calls.length) + ' customers here have had no visit for 60+ days.';
+      out = I18N.pt() ? state.region + ': vendas ' + signed(change(cur.n, prev.n)) + ' e visitas ' + signed(change(vc, vp)) + ' face a ' + L[1] + '. ' + int(calls.length) + ' clientes desta região estão há mais de 60 dias sem visita.' : state.region + ': revenue ' + signed(change(cur.n, prev.n)) + ' and visits ' + signed(change(vc, vp)) + ' on ' + L[1] + '. ' + int(calls.length) + ' customers here have had no visit for 60+ days.';
     } else {
       var worst = D.meta.regions.map(function (reg) { var p = function (r) { return r[1] === reg; }, c = sales('cur', p), pr = sales('prev', p); return { reg: reg, v: change(c.n, pr.n) }; })
         .sort(function (a, b) { return a.v - b.v; })[0];
-      out = 'Revenue is ' + signed(change(cur.n, prev.n)) + ' on ' + L[1] + '. ' + worst.reg + ' is the weakest region at ' + signed(worst.v) + ', and ' + int(calls.length) + ' customers have had no visit for 60+ days.';
+      out = I18N.pt() ? 'As vendas variam ' + signed(change(cur.n, prev.n)) + ' face a ' + L[1] + '. ' + (worst.reg === 'Lisboa e Vale do Tejo' ? 'Lisboa e Vale do Tejo é' : 'O ' + worst.reg + ' é') + ' a região mais fraca, com ' + signed(worst.v) + ', e ' + int(calls.length) + ' clientes estão há mais de 60 dias sem visita.' : 'Revenue is ' + signed(change(cur.n, prev.n)) + ' on ' + L[1] + '. ' + worst.reg + ' is the weakest region at ' + signed(worst.v) + ', and ' + int(calls.length) + ' customers have had no visit for 60+ days.';
     }
     document.getElementById('headline').textContent = out;
   }
@@ -634,18 +862,18 @@ dialog.cust::backdrop { background: rgb(19 23 27 / .45); }
     var c = D.call.find(function (x) { return x[1] === id; }); if (!c) return;
     var rep = D.meta.reps.find(function (r) { return r[0] === c[6]; }) || [c[6], c[6], '', null];
     var rs = repStats().find(function (r) { return r.id === c[6]; });
-    var p = function (r) { return r[1] === c[4]; }, rc = sales('cur', p), rp = sales('prev', p), L = PERIOD_LABEL[state.period];
-    document.getElementById('cust-kicker').textContent = 'Customer detail · #' + c[0] + ' on the call list';
-    document.getElementById('cust-name').textContent = c[2];
-    document.getElementById('cust-why').textContent = 'Call this week: no visit for ' + c[8] + ' days, ' + eur(c[11]) + ' bought in the last 12 months' + (c[10] === 'Active' ? ', and still ordering.' : ', status ' + c[10].toLowerCase() + '.');
+    var p = function (r) { return r[1] === c[4]; }, rc = sales('cur', p), rp = sales('prev', p), L = (I18N.pt() ? PL_PT : PERIOD_LABEL_EN)[state.period];
+    document.getElementById('cust-kicker').textContent = I18N.p('Customer detail · #' + c[0] + ' on the call list', 'Ficha de cliente · n.º ' + c[0] + ' da lista de contactos');
+    document.getElementById('cust-name').textContent = cname(c[2]);
+    document.getElementById('cust-why').textContent = I18N.pt() ? 'Contactar esta semana: sem visita há ' + c[8] + ' dias, ' + eur(c[11]) + ' comprados nos últimos 12 meses' + (c[10] === 'Active' ? ', e continua a encomendar.' : ', estado: ' + T(c[10]).toLowerCase() + '.') : 'Call this week: no visit for ' + c[8] + ' days, ' + eur(c[11]) + ' bought in the last 12 months' + (c[10] === 'Active' ? ', and still ordering.' : ', status ' + c[10].toLowerCase() + '.');
     var rows = [
-      ['Segment', c[3]], ['Region', c[4] + ' · ' + c[5]],
-      ['Sales rep', rep[1] + ' (' + rep[0] + ')' + (rep[3] ? ', left ' + rep[3].slice(0, 7) : '')],
-      ['Last visit', c[7] + ' · ' + c[8] + ' days before 30 Sep 2026'],
-      ['Last order', c[9] || '–'], ['Status', c[10]],
-      ['Bought, last 12 months', eur(c[11])],
-      ['Rep discount, ' + L[0], rs ? pct(rs.disc) + ' (margin ' + pct(rs.margin) + ')' : '–'],
-      ['Region revenue, ' + L[0], rp ? signed(change(rc.n, rp.n)) + ' on ' + L[1] : eur(rc.n)]
+      [T('Segment'), V(c[3])], [T('Region'), c[4] + ' · ' + c[5]],
+      [I18N.p('Sales rep', 'Vendedor'), rname(rep[1]) + ' (' + rep[0] + ')' + (rep[3] ? I18N.p(', left ', ', saiu em ') + rep[3].slice(0, 7) : '')],
+      [I18N.p('Last visit', 'Última visita'), c[7] + ' · ' + c[8] + I18N.p(' days before 30 Sep 2026', ' dias antes de 30 set 2026')],
+      [I18N.p('Last order', 'Última encomenda'), c[9] || '–'], [I18N.p('Status', 'Estado'), V(c[10])],
+      [I18N.p('Bought, last 12 months', 'Compras, últimos 12 meses'), eur(c[11])],
+      [I18N.p('Rep discount, ', 'Desconto do vendedor, ') + L[0], rs ? pct(rs.disc) + ' (' + I18N.p('margin', 'margem') + ' ' + pct(rs.margin) + ')' : '–'],
+      [I18N.p('Region revenue, ', 'Vendas da região, ') + L[0], rp ? signed(change(rc.n, rp.n)) + ' ' + I18N.p('on', 'face a') + ' ' + L[1] : eur(rc.n)]
     ];
     document.getElementById('cust-dl').innerHTML = rows.map(function (r) { return '<dt>' + esc(r[0]) + '</dt><dd>' + esc(r[1]) + '</dd>'; }).join('');
     var dlg = document.getElementById('cust');
@@ -666,9 +894,9 @@ dialog.cust::backdrop { background: rgb(19 23 27 / .45); }
     });
   }
   function selLabel(noSeg) {
-    var a = [state.rep || state.region || 'all regions'];
+    var a = [state.rep || state.region || T('all regions')];
     if (state.rep && state.region) a[0] = state.rep + ' (' + state.region + ')';
-    if (!noSeg && state.seg) a.push(state.seg.toLowerCase() + 's');
+    if (!noSeg && state.seg) a.push(I18N.pt() ? T('pl:' + state.seg) : state.seg.toLowerCase() + 's');
     return a.join(', ');
   }
   function repRegion(id) { var r = D.meta.reps.find(function (x) { return x[0] === id; }); return r ? r[2] : ''; }
@@ -680,14 +908,14 @@ dialog.cust::backdrop { background: rgb(19 23 27 / .45); }
   // Chips for every click filter; each chip clears its own filter
   function renderSelection() {
     var bar = document.getElementById('xf'), chips = [];
-    if (state.region) chips.push(['region', 'Region: ' + state.region, '']);
-    if (state.rep) chips.push(['rep', 'Rep: ' + state.rep, 'revenue by month, the call list and the seasonal index']);
-    if (state.cat) chips.push(['cat', 'Category: ' + state.cat, 'revenue by month and the rep figures']);
-    if (state.seg) chips.push(['seg', 'Segment: ' + state.seg, 'the call list and the payment table']);
-    if (state.band >= 0) chips.push(['band', 'Days since visit: ' + (state.band === 180 ? '180+' : state.band + '–' + (state.band + 29)), 'the call list']);
-    if (!chips.length) { bar.innerHTML = '<span>Click a bar, circle, line or table row to filter the other charts.</span>'; return; }
-    bar.innerHTML = '<span>Filtered by</span>' + chips.map(function (c) { return '<button type="button" data-k="' + c[0] + '" title="Clear this filter">' + esc(c[1]) + ' ×</button>'; }).join('') +
-      '<span>' + chips.filter(function (c) { return c[2]; }).map(function (c) { return c[1].split(':')[0] + ' filters ' + c[2]; }).join('; ') + (chips.some(function (c) { return c[0] !== 'region'; }) ? '. The headline numbers follow region and period only.' : '') + '</span>';
+    if (state.region) chips.push(['region', T('Region') + ': ' + state.region, '']);
+    if (state.rep) chips.push(['rep', T('Rep') + ': ' + state.rep, I18N.p('revenue by month, the call list and the seasonal index', 'as vendas por mês, a lista de contactos e o índice sazonal')]);
+    if (state.cat) chips.push(['cat', T('Category') + ': ' + V(state.cat), I18N.p('revenue by month and the rep figures', 'as vendas por mês e os números dos vendedores')]);
+    if (state.seg) chips.push(['seg', T('Segment') + ': ' + V(state.seg), I18N.p('the call list and the payment table', 'a lista de contactos e a tabela de pagamentos')]);
+    if (state.band >= 0) chips.push(['band', I18N.p('Days since visit: ', 'Dias desde a visita: ') + (state.band === 180 ? '180+' : state.band + '–' + (state.band + 29)), I18N.p('the call list', 'a lista de contactos')]);
+    if (!chips.length) { bar.innerHTML = '<span>' + T('Click a bar, circle, line or table row to filter the other charts.') + '</span>'; return; }
+    bar.innerHTML = '<span>' + T('Filtered by') + '</span>' + chips.map(function (c) { return '<button type="button" data-k="' + c[0] + '" title="' + T('Clear this filter') + '">' + esc(c[1]) + ' ×</button>'; }).join('') +
+      '<span>' + chips.filter(function (c) { return c[2]; }).map(function (c) { return c[1].split(':')[0] + I18N.p(' filters ', ' filtra ') + c[2]; }).join('; ') + (chips.some(function (c) { return c[0] !== 'region'; }) ? I18N.p('. The headline numbers follow region and period only.', '. Os números principais seguem apenas a região e o período.') : '') + '</span>';
     bar.querySelectorAll('button').forEach(function (b) { b.addEventListener('click', function () { var k = b.dataset.k; state[k] = DEF[k]; syncControls(); render(); }); });
   }
   function syncControls() {
@@ -708,11 +936,13 @@ dialog.cust::backdrop { background: rgb(19 23 27 / .45); }
     .then(function (res) {
       D.sales = res[0]; D.visits = res[1]; D.call = res[2]; D.recency = res[3]; D.aging = res[4]; D.pay = res[5]; D.buyers = res[6]; D.meta = res[7];
       D.months = Array.from(new Set(D.sales.map(function (r) { return r[0]; }))).sort();
-      document.getElementById('meta-rows').textContent = 'Order lines: ' + int(D.meta.fact_rows);
+      document.getElementById('meta-rows').textContent = I18N.p('Order lines: ', 'Linhas de encomenda: ') + int(D.meta.fact_rows);
       var sel = document.getElementById('region-sel');
       D.meta.regions.forEach(function (r) { var o = document.createElement('option'); o.value = r; o.textContent = r; sel.appendChild(o); });
       syncControls(); render();
     })
-    .catch(function () { document.getElementById('kpis').innerHTML = '<p>The data files did not load. Reload the page to try again.</p>'; });
+    .catch(function () { document.getElementById('kpis').innerHTML = '<p>' + T('The data files did not load. Reload the page to try again.') + '</p>'; });
+  I18N.on(function () { if (D.meta) { document.getElementById('meta-rows').textContent = I18N.p('Order lines: ', 'Linhas de encomenda: ') + int(D.meta.fact_rows); render(); } });
+  I18N.start();
 })();
 </script>
